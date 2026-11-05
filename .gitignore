@@ -1,0 +1,29 @@
+# Local secrets and environment overrides
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials*.json
+*service-account*.json
+
+# Local tools, dependencies, generated output
+.DS_Store
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+*.log
+__pycache__/
+.venv/
+
+# Machine-specific assistant configuration
+.codex/
+.claude/
+
+# Local data
+*.sqlite
+*.sqlite3
+*.db
+uploads/
