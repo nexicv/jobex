@@ -473,4 +473,1470 @@ ratingDialog=function(id){const a=application(id);if(!a||a.status!=='completed')
 chooseRating=function(n){if(!Number.isInteger(n)||n<1||n>5)return;selectedRating=n;document.querySelectorAll('#ratingButtons button').forEach((b,i)=>{b.classList.toggle('selected',i<n);b.setAttribute('aria-pressed',i+1===n);b.style.animation='none';void b.offsetWidth;b.style.animation=i<n?`ratingPop .38s ${i*.045}s both`:''});document.getElementById('ratingStatus').textContent=ratingWords[n]+(state.role==='employer'?' · '+ratingRewards[n]+' LARP points':'');document.getElementById('ratingSubmit').disabled=false};
 saveRating=function(id){const a=application(id);if(!a||a.status!=='completed'||!selectedRating)return;const employer=state.role==='employer';a[state.role+'Rating']=selectedRating;if(employer){const previous=Number(a.larpEarned)||0;const reward=ratingRewards[selectedRating];state.larp.points=Math.max(0,state.larp.points+reward-previous);a.larpEarned=reward;a.rewardPending=false;}persist();render();openModal(`<div class="rating-celebration"><span class="eyebrow">FEEDBACK SAVED</span><div class="rating-success" aria-hidden="true">✦</div><h2>${ratingWords[selectedRating]}</h2><p>${'★'.repeat(selectedRating)}${'☆'.repeat(5-selectedRating)}</p><h3>${employer?a.larpEarned+' LARP points awarded':'Your review is in.'}</h3><p>${employer?'100 base points × '+[0,.1,.2,.5,1,1.5][selectedRating]+' rating multiplier.':a.employerRating?'Your shift earned '+a.larpEarned+' LARP points.':'Your points are pending your employer’s rating.'}</p><button class="button full" onclick="shareShift(${id})">Preview shift story ↗</button><button class="button light full" style="margin-top:10px" onclick="ratingDialog(${id})">Review or change rating</button><button class="text-button" onclick="modal.close()">Done</button></div>`)};
 render();if(!state.onboarded)openOnboarding();
-</script><style>.rating-buttons{justify-content:center;gap:10px}.rating-buttons button{width:clamp(38px,10vw,58px);height:58px;transition:background .2s,color .2s,transform .2s}.rating-buttons button:hover{transform:translateY(-4px)}.rating-buttons button.selected{color:#a56cff;background:var(--pale)}#ratingStatus{text-align:center;min-height:28px;font-weight:700}.rating-celebration{text-align:center;padding:15px 0}.rating-success{font-size:72px;color:var(--purple);animation:ratingPop .65s both}.rating-celebration>p:first-of-type{font-size:28px;color:var(--purple)}@keyframes ratingPop{0%{transform:scale(.6) rotate(-12deg);opacity:.4}65%{transform:scale(1.18) rotate(5deg)}100%{transform:scale(1);opacity:1}}@media(prefers-reduced-motion:reduce){.rating-buttons button,.rating-success{animation:none!important;transition:none!important}}</style></body></html>
+</script><style>.rating-buttons{justify-content:center;gap:10px}.rating-buttons button{width:clamp(38px,10vw,58px);height:58px;transition:background .2s,color .2s,transform .2s}.rating-buttons button:hover{transform:translateY(-4px)}.rating-buttons button.selected{color:#a56cff;background:var(--pale)}#ratingStatus{text-align:center;min-height:28px;font-weight:700}.rating-celebration{text-align:center;padding:15px 0}.rating-success{font-size:72px;color:var(--purple);animation:ratingPop .65s both}.rating-celebration>p:first-of-type{font-size:28px;color:var(--purple)}@keyframes ratingPop{0%{transform:scale(.6) rotate(-12deg);opacity:.4}65%{transform:scale(1.18) rotate(5deg)}100%{transform:scale(1);opacity:1}}@media(prefers-reduced-motion:reduce){.rating-buttons button,.rating-success{animation:none!important;transition:none!important}}</style>
+<style id="assistant">
+.assistant-on #notices{bottom:calc(24px + 56px + 12px)}
+body.ob-open .assistant-fab{display:none}
+.assistant-fab{position:fixed;right:24px;bottom:24px;z-index:34;height:56px;padding:0 20px 0 16px;border-radius:999px;border:1px solid transparent;background:var(--accent);color:var(--on-accent);font-size:13px;font-weight:650;display:inline-flex;align-items:center;gap:8px;box-shadow:0 14px 34px var(--sh),0 2px 6px var(--sh-strong);cursor:pointer;letter-spacing:-.1px}
+.assistant-fab:hover{filter:brightness(1.08)}
+.assistant-fab:focus-visible{outline:2px solid var(--accent-text);outline-offset:3px}
+.assistant-fab-mark{font-size:14px;line-height:1}
+.assistant-panel{position:fixed;top:0;right:0;bottom:0;z-index:35;width:min(400px,100vw);display:flex;flex-direction:column;background:var(--surface);color:var(--ink);border-left:1px solid var(--line);box-shadow:-20px 0 60px var(--sh)}
+.assistant-panel[hidden]{display:none}
+.assistant-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 14px 12px;border-bottom:1px solid var(--line)}
+.assistant-title{margin:0;font-size:13px;font-weight:700;letter-spacing:.1px}
+.assistant-head-actions{display:flex;gap:6px}
+.assistant-icon-btn{padding:6px 11px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--soft);font-size:11px;font-weight:650;cursor:pointer}
+.assistant-icon-btn:hover{color:var(--ink);border-color:var(--line-strong)}
+.assistant-icon-btn:focus-visible{outline:2px solid var(--accent-text);outline-offset:2px}
+.assistant-body{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.assistant-log{flex:1;min-height:0;overflow-y:auto;padding:16px 14px 8px;display:flex;flex-direction:column;gap:14px;overscroll-behavior:contain}
+.assistant-empty{color:var(--muted);font-size:12px;line-height:1.6}
+.assistant-msg{display:flex;flex-direction:column;gap:6px}
+.assistant-msg-user{align-items:flex-end}
+.assistant-bubble{max-width:88%;padding:9px 12px;border-radius:12px 12px 4px 12px;background:var(--tint);border:1px solid var(--tint-line);color:var(--ink);font-size:12px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
+.assistant-text{font-size:12px;line-height:1.6;color:var(--ink);white-space:pre-wrap;overflow-wrap:anywhere}.assistant-text strong{font-weight:700}
+.assistant-notice{margin:0;font-size:11px;line-height:1.5;color:var(--muted)}
+.assistant-notice.is-error{color:var(--danger-text)}
+.assistant-steps{display:flex;flex-direction:column;gap:5px}
+.assistant-steps[hidden]{display:none}
+.assistant-steps-summary{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;padding:0;border:0;background:none;color:var(--muted);font-size:11px;font-weight:650;cursor:pointer}
+.assistant-steps-summary[hidden]{display:none}
+.assistant-steps-summary::after{content:'▾';font-size:9px;transition:transform .18s ease}
+.assistant-steps-summary[aria-expanded="true"]::after{transform:rotate(180deg)}
+.assistant-step-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.assistant-step-list[hidden]{display:none}
+.assistant-step{display:flex;align-items:flex-start;gap:8px;font-size:11px;line-height:1.45;color:var(--muted)}
+.assistant-step-icon{position:relative;flex:none;width:12px;height:12px;margin-top:1px;border:1.5px solid var(--muted);border-radius:50%}
+.assistant-step.is-current{color:var(--soft)}
+.assistant-step.is-current .assistant-step-icon{border-color:var(--accent-text);border-top-color:transparent;animation:assistant-spin .9s linear infinite}
+.assistant-step.is-done .assistant-step-icon{border-color:var(--green);color:var(--green)}
+.assistant-step.is-done .assistant-step-icon::after{content:'✓';position:absolute;inset:0;display:grid;place-items:center;font-size:9px;line-height:1}
+@keyframes assistant-spin{to{transform:rotate(360deg)}}
+.assistant-confirm{display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2)}
+.assistant-confirm-text{margin:0;font-size:12px;line-height:1.55;color:var(--ink)}
+.assistant-confirm-row{display:flex;gap:8px;flex-wrap:wrap}
+.assistant-btn{padding:8px 14px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:11px;font-weight:650;cursor:pointer}
+.assistant-btn:hover{border-color:var(--line-strong)}
+.assistant-btn-primary{border-color:transparent;background:var(--accent);color:var(--on-accent)}
+.assistant-btn:focus-visible{outline:2px solid var(--accent-text);outline-offset:2px}
+.assistant-btn:disabled{opacity:.5;cursor:default}
+.assistant-compose{display:flex;align-items:flex-end;gap:8px;padding:10px 14px 8px;border-top:1px solid var(--line);background:var(--surface)}
+.assistant-input{flex:1;min-width:0;min-height:40px;max-height:120px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font:inherit;font-size:12px;line-height:1.5;resize:none}
+.assistant-input:focus{outline:none;border-color:var(--line-strong)}
+.assistant-input:focus-visible{outline:2px solid var(--accent-text);outline-offset:1px}
+.assistant-send,.assistant-stop{padding:11px 15px;border-radius:10px;font-size:12px;font-weight:650;cursor:pointer}
+.assistant-send{border:1px solid transparent;background:var(--accent);color:var(--on-accent)}
+.assistant-send:hover{filter:brightness(1.08)}
+.assistant-stop{border:1px solid var(--line);background:var(--surface-2);color:var(--ink)}
+.assistant-send[hidden],.assistant-stop[hidden]{display:none}
+.assistant-note{margin:0;padding:0 14px 8px;background:var(--surface);color:var(--muted);font-size:10px;line-height:1.5}
+.assistant-foot{display:flex;flex-direction:column;gap:8px;padding:0 14px 12px;background:var(--surface)}
+.assistant-link{align-self:flex-start;padding:0;border:0;background:none;color:var(--muted);font-size:11px;font-weight:650;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.assistant-link:hover{color:var(--ink)}
+.assistant-team{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.assistant-team[hidden]{display:none}
+.assistant-team input{flex:1;min-width:0;padding:9px 10px;border-radius:9px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font:inherit;font-size:12px}
+.assistant-team input:focus-visible{outline:2px solid var(--accent-text);outline-offset:1px}
+.assistant-team button{padding:9px 12px;border-radius:9px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-size:11px;font-weight:650;cursor:pointer}
+.assistant-team-msg{flex-basis:100%;margin:0;font-size:11px;line-height:1.4;color:var(--danger-text)}
+.assistant-team-msg:empty{display:none}
+.assistant-closed{margin:0 14px 14px;padding:14px;border-radius:10px;border:1px solid var(--tint-line);background:var(--tint);color:var(--ink);font-size:12px;line-height:1.6}
+.assistant-closed[hidden]{display:none}
+.assistant-live{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
+@media (max-width:999px){.assistant-panel{width:100vw;border-left:0;box-shadow:none}.assistant-fab{right:16px;bottom:16px}.assistant-on #notices{bottom:calc(16px + 56px + 12px)}}
+@media (prefers-reduced-motion:reduce){.assistant-step.is-current .assistant-step-icon{animation:none;border-top-color:var(--accent-text)}.assistant-steps-summary::after{transition:none}}
+</style>
+<script id="assistant">const ASSISTANT_URL = '';
+
+(function () {
+  'use strict';
+
+  var STORE_KEY = 'larpd-assistant-v1';
+  var TEAM_KEY = 'larpd-assistant-team';
+  var MAX_MESSAGES = 40;
+  var MAX_TOOL_ROUNDS = 6;
+  var MAX_USER_CHARS = 2000;
+  var MAX_RESULT_CHARS = 6000;
+  var RESULT_BUDGET = MAX_RESULT_CHARS - 80;
+  var OFFLINE_TEXT = 'The assistant is offline right now. Everything else in the demo still works.';
+
+  var TOOLS = {
+    get_app_overview: { confirm: false, role: 'any', label: 'Checking where you are in the app', required: [], props: {} },
+    search_shifts: {
+      confirm: false, role: 'any', label: 'Finding suitable shifts', required: [], props: {
+        query: { t: 'string' }, category: { t: 'enum', v: ['Hospitality', 'Events', 'Retail'] }, date: { t: 'string' },
+        min_rate: { t: 'number' }, max_commute: { t: 'number' },
+        include_non_fitting: { t: 'boolean' }, include_passed: { t: 'boolean' }, only_saved: { t: 'boolean' },
+        sort: { t: 'enum', v: ['match', 'pay', 'commute'] }, limit: { t: 'int', min: 1, max: 20 }
+      }
+    },
+    get_shift: { confirm: false, role: 'any', label: 'Reading the shift details', required: ['shift_id'], props: { shift_id: { t: 'int' } } },
+    get_profile: { confirm: false, role: 'any', label: 'Reading your profile', required: [], props: {} },
+    list_connections: {
+      confirm: false, role: 'any', label: 'Checking your connections', required: [], props: {
+        status: { t: 'enum', v: ['applied', 'matched', 'contract', 'signed', 'completed', 'declined'] }
+      }
+    },
+    get_conversation: { confirm: false, role: 'any', label: 'Reading the chat', required: ['shift_id'], props: { shift_id: { t: 'int' } } },
+    get_payday_plan: { confirm: false, role: 'worker', label: 'Reading your Payday plan', required: [], props: {} },
+    get_larp_status: { confirm: false, role: 'any', label: 'Checking your LARP progress', required: [], props: {} },
+    get_backstage: { confirm: false, role: 'worker', label: 'Checking Backstage', required: [], props: {} },
+    get_employer_dashboard: { confirm: false, role: 'employer', label: 'Reading your employer dashboard', required: [], props: {} },
+    open_page: {
+      confirm: false, role: 'any', label: 'Opening the page', required: ['page'], props: {
+        page: { t: 'enum', v: ['discover', 'matches', 'shifts', 'payday', 'profile', 'larp', 'backstage', 'overview', 'studio', 'candidates', 'analytics'] }
+      }
+    },
+    show_shift: { confirm: false, role: 'any', label: 'Opening the shift', required: ['shift_id'], props: { shift_id: { t: 'int' } } },
+    switch_role: {
+      confirm: false, role: 'any', label: 'Switching view', required: ['role'], props: { role: { t: 'enum', v: ['worker', 'employer'] } }
+    },
+    save_shift: {
+      confirm: false, role: 'worker', label: 'Saving the shift', required: ['shift_id', 'saved'], props: { shift_id: { t: 'int' }, saved: { t: 'boolean' } }
+    },
+    pass_shift: { confirm: false, role: 'worker', label: 'Passing on the shift', required: ['shift_id'], props: { shift_id: { t: 'int' } } },
+    express_interest: { confirm: true, role: 'worker', label: 'Sending your interest', required: ['shift_id'], props: { shift_id: { t: 'int' } } },
+    update_preferences: {
+      confirm: true, role: 'worker', label: 'Updating your preferences', required: [], props: {
+        available: { t: 'boolean' }, skills: { t: 'stringArray' }, days: { t: 'stringArray' },
+        start: { t: 'string' }, end: { t: 'string' }, min_rate: { t: 'number', min: 0 }, max_commute: { t: 'number', min: 5, max: 120 }
+      }
+    },
+    send_chat_message: {
+      confirm: true, role: 'any', label: 'Sending the message', required: ['shift_id', 'text'], props: { shift_id: { t: 'int' }, text: { t: 'string', maxLength: 500 } }
+    },
+    set_payday_goal: {
+      confirm: true, role: 'worker', label: 'Setting your Payday goal', required: ['target', 'max_hours'], props: {
+        target: { t: 'int', min: 100, max: 10000 }, max_hours: { t: 'int', min: 4, max: 40 }
+      }
+    },
+    build_payday_plan: {
+      confirm: true, role: 'worker', label: 'Building your Payday plan', required: ['mode'], props: {
+        mode: { t: 'enum', v: ['suggest', 'these_shifts'] }, shift_ids: { t: 'intArray' }
+      }
+    },
+    decide_candidate: {
+      confirm: true, role: 'employer', label: 'Recording your decision', required: ['shift_id', 'decision'], props: {
+        shift_id: { t: 'int' }, decision: { t: 'enum', v: ['accept', 'decline'] }
+      }
+    },
+    draft_shift: { confirm: false, role: 'employer', label: 'Creating the shift form', required: ['brief'], props: { brief: { t: 'string', maxLength: 400 } } },
+    publish_shift: {
+      confirm: true, role: 'employer', label: 'Publishing the shift', required: [], props: {
+        title: { t: 'string' }, company: { t: 'string' }, area: { t: 'string' }, rate: { t: 'number' },
+        date: { t: 'string' }, start: { t: 'string' }, end: { t: 'string' }, skills: { t: 'stringArray' },
+        category: { t: 'enum', v: ['Hospitality', 'Events', 'Retail'] }
+      }
+    }
+  };
+
+  var S = { messages: [], log: [] };
+  var refs = {};
+  var nodes = new WeakMap();
+  var cur = null;
+  var busy = false;
+  var aborter = null;
+  var pendingConfirm = null;
+  var closedTimer = null;
+  var closedInfo = null;
+  var stopRequested = false;
+  var base = '';
+
+  function trimSlash(s) { return String(s || '').replace(/\/+$/, ''); }
+
+  function resolveBase() {
+    var raw = typeof ASSISTANT_URL === 'string' ? ASSISTANT_URL.trim() : '';
+    if (raw) return trimSlash(raw);
+    var q = '';
+    try { q = new URLSearchParams(location.search).get('assistant') || ''; } catch (e) { q = ''; }
+    if (!q) return '';
+    var u = null;
+    try { u = new URL(q, location.href); } catch (e) { return ''; }
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return '';
+    if (u.hostname !== '127.0.0.1' && u.hostname !== 'localhost') return '';
+    return trimSlash(u.origin + (u.pathname === '/' ? '' : u.pathname));
+  }
+
+  function loadStore() {
+    try {
+      var raw = sessionStorage.getItem(STORE_KEY);
+      if (!raw) return;
+      var v = JSON.parse(raw);
+      if (!v || v.v !== 1 || !Array.isArray(v.messages) || !Array.isArray(v.log)) return;
+      S.messages = v.messages;
+      S.log = v.log;
+    } catch (e) { S.messages = []; S.log = []; }
+  }
+
+  function saveStore() {
+    try { sessionStorage.setItem(STORE_KEY, JSON.stringify({ v: 1, messages: S.messages, log: S.log })); } catch (e) { }
+  }
+
+  function clearStore() {
+    S.messages = [];
+    S.log = [];
+    try { sessionStorage.removeItem(STORE_KEY); } catch (e) { }
+  }
+
+  function getTeam() { try { return sessionStorage.getItem(TEAM_KEY) || ''; } catch (e) { return ''; } }
+
+  function el(tag, cls, attrs) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (attrs) { for (var k in attrs) { if (Object.prototype.hasOwnProperty.call(attrs, k) && attrs[k] !== null && attrs[k] !== undefined) n.setAttribute(k, String(attrs[k])); } }
+    return n;
+  }
+
+  function scrollToEnd() { if (refs.log) refs.log.scrollTop = refs.log.scrollHeight; }
+  function setLive(t) { if (refs.live && t) refs.live.textContent = String(t).replace(/\*\*/g, ''); }
+  // Renders **bold** as <strong> using text nodes only; nothing from the model is parsed as HTML.
+  // Added by (Claude Opus 5.5 Medium), 2026-11-06T21:40+01:00 (Europe/Warsaw).
+  function paintRich(target, text) {
+    target.textContent = '';
+    var parts = String(text || '').split(/\*\*([^*\n]+?)\*\*/);
+    for (var i = 0; i < parts.length; i++) {
+      if (!parts[i]) continue;
+      if (i % 2) { var b = document.createElement('strong'); b.textContent = parts[i]; target.appendChild(b); }
+      else target.appendChild(document.createTextNode(parts[i]));
+    }
+  }
+
+  function buildUi() {
+    var fab = el('button', 'assistant-fab', { type: 'button', id: 'assistantFab', 'aria-haspopup': 'dialog', 'aria-expanded': 'false', 'aria-controls': 'assistantPanel' });
+    var mark = el('span', 'assistant-fab-mark', { 'aria-hidden': 'true' });
+    mark.textContent = '✦';
+    var fabLabel = el('span', 'assistant-fab-label');
+    fabLabel.textContent = 'Ask LARPd';
+    fab.appendChild(mark);
+    fab.appendChild(fabLabel);
+
+    var panel = el('section', 'assistant-panel', { id: 'assistantPanel', role: 'dialog', 'aria-label': 'LARPd assistant' });
+    panel.hidden = true;
+
+    var head = el('div', 'assistant-head');
+    var title = el('h2', 'assistant-title');
+    title.textContent = 'Ask LARPd';
+    var headActions = el('div', 'assistant-head-actions');
+    var newChat = el('button', 'assistant-icon-btn', { type: 'button' });
+    newChat.textContent = 'New chat';
+    var closeBtn = el('button', 'assistant-icon-btn', { type: 'button', 'aria-label': 'Close the assistant' });
+    closeBtn.textContent = 'Close';
+    headActions.appendChild(newChat);
+    headActions.appendChild(closeBtn);
+    head.appendChild(title);
+    head.appendChild(headActions);
+
+    var body = el('div', 'assistant-body');
+    var log = el('div', 'assistant-log', { id: 'assistantLog' });
+    var closed = el('div', 'assistant-closed', { role: 'status' });
+    closed.hidden = true;
+    var live = el('div', 'assistant-live', { role: 'status', 'aria-live': 'polite', 'aria-atomic': 'false' });
+    body.appendChild(log);
+    body.appendChild(closed);
+    body.appendChild(live);
+
+    var form = el('form', 'assistant-compose');
+    var input = el('textarea', 'assistant-input', { id: 'assistantInput', rows: '2', 'aria-label': 'Your question for LARPd', maxlength: String(MAX_USER_CHARS), placeholder: 'Ask about shifts, pay or your plan…' });
+    var send = el('button', 'assistant-send', { type: 'submit' });
+    send.textContent = 'Send';
+    var stop = el('button', 'assistant-stop', { type: 'button' });
+    stop.textContent = 'Stop';
+    stop.hidden = true;
+    form.appendChild(input);
+    form.appendChild(send);
+    form.appendChild(stop);
+
+    var note = el('p', 'assistant-note');
+    note.textContent = "AI answers can be wrong. Demo data only; don't enter real personal details.";
+
+    var foot = el('div', 'assistant-foot');
+    var teamLink = el('button', 'assistant-link', { type: 'button' });
+    teamLink.textContent = 'Team access';
+    var teamForm = el('form', 'assistant-team');
+    teamForm.hidden = true;
+    var teamInput = el('input', null, { type: 'password', name: 'passphrase', 'aria-label': 'Team passphrase', placeholder: 'Team passphrase', autocomplete: 'off' });
+    var teamGo = el('button', null, { type: 'submit' });
+    teamGo.textContent = 'Unlock';
+    var teamMsg = el('p', 'assistant-team-msg', { role: 'status' });
+    teamForm.appendChild(teamInput);
+    teamForm.appendChild(teamGo);
+    teamForm.appendChild(teamMsg);
+    foot.appendChild(teamLink);
+    foot.appendChild(teamForm);
+
+    panel.appendChild(head);
+    panel.appendChild(body);
+    panel.appendChild(form);
+    panel.appendChild(note);
+    panel.appendChild(foot);
+    document.body.appendChild(fab);
+    document.body.appendChild(panel);
+
+    refs = { fab: fab, panel: panel, log: log, closed: closed, live: live, form: form, input: input, send: send, stop: stop, teamForm: teamForm, teamInput: teamInput, teamMsg: teamMsg };
+
+    fab.addEventListener('click', openPanel);
+    closeBtn.addEventListener('click', closePanel);
+    newChat.addEventListener('click', newChatNow);
+    form.addEventListener('submit', function (ev) { ev.preventDefault(); ask(input.value); });
+    stop.addEventListener('click', stopTurn);
+    teamLink.addEventListener('click', function () { teamForm.hidden = !teamForm.hidden; if (!teamForm.hidden) teamInput.focus(); });
+    teamForm.addEventListener('submit', submitTeam);
+    input.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); ask(input.value); }
+    });
+    document.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Escape' && !panel.hidden) { ev.preventDefault(); closePanel(); }
+    });
+  }
+
+  function openPanel() {
+    if (!refs.panel) return;
+    refs.panel.hidden = false;
+    refs.fab.setAttribute('aria-expanded', 'true');
+    refs.input.focus();
+    scrollToEnd();
+    checkStatus();
+  }
+
+  function closePanel() {
+    if (!refs.panel) return;
+    refs.panel.hidden = true;
+    refs.fab.setAttribute('aria-expanded', 'false');
+    refs.fab.focus();
+  }
+
+  function newChatNow() {
+    if (busy) stopTurn();
+    clearStore();
+    renderLog();
+    hideClosed();
+    refs.input.focus();
+  }
+
+  function renderLog() {
+    if (!refs.log) return;
+    refs.log.textContent = '';
+    if (!S.log.length) {
+      var empty = el('p', 'assistant-empty');
+      empty.textContent = 'Ask me about shifts that fit your week, your Payday plan, or what happened with an application.';
+      refs.log.appendChild(empty);
+      return;
+    }
+    for (var i = 0; i < S.log.length; i++) refs.log.appendChild(renderItem(S.log[i]));
+    scrollToEnd();
+  }
+
+  function renderItem(item) {
+    if (item.kind === 'user') {
+      var wrapU = el('div', 'assistant-msg assistant-msg-user');
+      var bubble = el('div', 'assistant-bubble');
+      bubble.textContent = item.text;
+      wrapU.appendChild(bubble);
+      return wrapU;
+    }
+    if (item.kind === 'notice') {
+      var note = el('p', 'assistant-notice' + (item.tone ? ' is-' + item.tone : ''));
+      note.textContent = item.text;
+      return note;
+    }
+    var wrap = el('div', 'assistant-msg assistant-msg-bot');
+    var stepsWrap = el('div', 'assistant-steps');
+    var summary = el('button', 'assistant-steps-summary', { type: 'button' });
+    var list = el('ol', 'assistant-step-list');
+    stepsWrap.appendChild(summary);
+    stepsWrap.appendChild(list);
+    var textEl = el('div', 'assistant-text');
+    paintRich(textEl, item.text || '');
+    wrap.appendChild(stepsWrap);
+    wrap.appendChild(textEl);
+    summary.addEventListener('click', function () {
+      if (!item.finished) return;
+      item.collapsed = !item.collapsed;
+      paintSteps(item);
+      saveStore();
+    });
+    nodes.set(item, { node: wrap, textEl: textEl, stepsEl: stepsWrap, summaryEl: summary, listEl: list });
+    paintSteps(item);
+    return wrap;
+  }
+
+  function paintSteps(item) {
+    var r = nodes.get(item);
+    if (!r) return;
+    var steps = item.steps || [];
+    r.stepsEl.hidden = !steps.length;
+    r.listEl.textContent = '';
+    for (var i = 0; i < steps.length; i++) {
+      var s = steps[i];
+      var li = el('li', 'assistant-step' + (s.done ? ' is-done' : ' is-current'));
+      var ic = el('span', 'assistant-step-icon', { 'aria-hidden': 'true' });
+      var lb = el('span', 'assistant-step-label');
+      lb.textContent = s.label;
+      li.appendChild(ic);
+      li.appendChild(lb);
+      r.listEl.appendChild(li);
+    }
+    var n = steps.length;
+    r.summaryEl.textContent = n + (n === 1 ? ' step' : ' steps');
+    r.summaryEl.hidden = !item.finished;
+    r.summaryEl.setAttribute('aria-expanded', item.collapsed ? 'false' : 'true');
+    r.listEl.hidden = !!item.finished && !!item.collapsed;
+  }
+
+  function appendLog(item) {
+    S.log.push(item);
+    if (!refs.log) return null;
+    var node = renderItem(item);
+    refs.log.appendChild(node);
+    scrollToEnd();
+    return node;
+  }
+
+  function appendNotice(text, tone) {
+    appendLog({ kind: 'notice', text: text, tone: tone || '' });
+  }
+
+  function pushStep(label) {
+    if (!cur || !cur.item || !label) return;
+    var steps = cur.item.steps;
+    var last = steps[steps.length - 1];
+    if (last && !last.done && last.label === label) return;
+    for (var i = 0; i < steps.length; i++) steps[i].done = true;
+    steps.push({ label: label, done: false });
+    paintSteps(cur.item);
+    scrollToEnd();
+  }
+
+  function appendText(text) {
+    if (!cur || !cur.item || !text) return;
+    cur.item.text += text;
+    var r = nodes.get(cur.item);
+    if (r) paintRich(r.textEl, cur.item.text);
+    scrollToEnd();
+  }
+
+  function finishItem(item) {
+    item.finished = true;
+    if (item.text) setLive(item.text);
+    for (var i = 0; i < item.steps.length; i++) item.steps[i].done = true;
+    item.collapsed = item.steps.length > 0;
+    var r = nodes.get(item);
+    if (!item.text && !item.steps.length) {
+      var idx = S.log.indexOf(item);
+      if (idx >= 0) S.log.splice(idx, 1);
+      if (r && r.node && r.node.parentNode) r.node.parentNode.removeChild(r.node);
+      return;
+    }
+    if (r) paintSteps(item);
+  }
+
+  function detectLocale(text) {
+    var t = String(text || '').toLowerCase();
+    if (/[ąćęłńóśźż]/.test(t)) return 'pl';
+    var words = ['jak', 'czy', 'jakie', 'mam', 'mnie', 'się', 'zmiany', 'proszę'];
+    for (var i = 0; i < words.length; i++) {
+      var re = new RegExp('(^|[^a-ząćęłńóśźż])' + words[i] + '([^a-ząćęłńóśźż]|$)');
+      if (re.test(t)) return 'pl';
+    }
+    return 'en';
+  }
+
+  function lastUserText() {
+    for (var i = S.messages.length - 1; i >= 0; i--) if (S.messages[i].role === 'user') return S.messages[i].content || '';
+    return '';
+  }
+
+  function trimHistory(list) {
+    var out = list.slice();
+    while (out.length > MAX_MESSAGES) {
+      var cut = -1;
+      for (var i = 1; i < out.length; i++) { if (out[i].role === 'user') { cut = i; break; } }
+      if (cut > 0) out.splice(0, cut); else out.shift();
+    }
+    return out;
+  }
+
+  function setBusyUi(on) {
+    if (!refs.send) return;
+    refs.send.hidden = on;
+    refs.stop.hidden = !on;
+  }
+
+  function ask(text) {
+    if (busy || !refs.input) return;
+    if (!base) return;
+    var trimmed = String(text || '').trim();
+    if (!trimmed) return;
+    if (trimmed.length > MAX_USER_CHARS) {
+      appendNotice('Keep your question under ' + MAX_USER_CHARS + ' characters.', 'error');
+      return;
+    }
+    S.messages.push({ role: 'user', content: trimmed });
+    appendLog({ kind: 'user', text: trimmed });
+    refs.input.value = '';
+    saveStore();
+    runTurn();
+  }
+
+  function stopTurn() {
+    stopRequested = true;
+    if (pendingConfirm) { try { pendingConfirm.cancel(); } catch (e) { } }
+    if (aborter) { try { aborter.abort(); } catch (e) { } }
+  }
+
+  function makeParser() {
+    var buf = '';
+    var evName = '';
+    var dataLines = [];
+    var outcome = null;
+    var finished = false;
+    function handle() {
+      if (!dataLines.length) { evName = ''; return; }
+      var r = handleEvent(evName, dataLines.join('\n'));
+      evName = '';
+      dataLines = [];
+      if (r) { outcome = r; finished = true; }
+    }
+    return {
+      feed: function (chunkText) {
+        buf += chunkText;
+        var nl;
+        while (!finished && (nl = buf.indexOf('\n')) >= 0) {
+          var line = buf.slice(0, nl);
+          buf = buf.slice(nl + 1);
+          if (line.charAt(line.length - 1) === '\r') line = line.slice(0, -1);
+          if (line === '') { handle(); if (finished) return true; continue; }
+          if (line.charAt(0) === ':') continue;
+          if (line.slice(0, 6) === 'event:') { evName = line.slice(6).trim(); continue; }
+          if (line.slice(0, 5) === 'data:') { var d = line.slice(5); if (d.charAt(0) === ' ') d = d.slice(1); dataLines.push(d); continue; }
+        }
+        return finished;
+      },
+      flush: function () { if (!finished) handle(); return finished; },
+      result: function () { return outcome; }
+    };
+  }
+
+  function handleEvent(name, text) {
+    var data = {};
+    if (text) { try { data = JSON.parse(text); } catch (e) { return null; } }
+    if (name === 'status') { if (data.label) pushStep(data.label); return null; }
+    if (name === 'content') { if (typeof data.text === 'string' && data.text) appendText(data.text); return null; }
+    if (name === 'tool_calls') { return { kind: 'tool_calls', calls: Array.isArray(data.calls) ? data.calls : [], message: data.message || null }; }
+    if (name === 'done') { if (data.message) S.messages.push(data.message); return { kind: 'done' }; }
+    if (name === 'refused') {
+      if (data.message) S.messages.push(data.message);
+      if (data.text) appendText(data.text);
+      return { kind: 'done' };
+    }
+    if (name === 'closed') { applyClosed(data); return { kind: 'done' }; }
+    if (name === 'busy') {
+      if (data.text) appendNotice(data.text, '');
+      else if (data.retry_after_s) appendNotice('You can try again in about ' + Math.max(1, Math.round(data.retry_after_s / 60)) + ' min.', '');
+      return { kind: 'done' };
+    }
+    if (name === 'error') { appendNotice(data.text || OFFLINE_TEXT, 'error'); return { kind: 'done' }; }
+    return null;
+  }
+
+  async function streamOnce() {
+    var payload = { locale: detectLocale(lastUserText()), messages: trimHistory(S.messages) };
+    var headers = { 'Content-Type': 'application/json' };
+    var team = getTeam();
+    if (team) headers['x-jobex-team'] = team;
+    var controller = new AbortController();
+    aborter = controller;
+    var res = null;
+    try {
+      res = await fetch(base + '/v1/chat', { method: 'POST', headers: headers, body: JSON.stringify(payload), signal: controller.signal });
+    } catch (err) {
+      aborter = null;
+      if (err && err.name === 'AbortError') return { kind: 'stopped' };
+      appendNotice(OFFLINE_TEXT, 'error');
+      return { kind: 'done' };
+    }
+    if (!res.ok) {
+      var msg = '';
+      try { var j = await res.json(); if (j && j.error) msg = String(j.error); } catch (e) { }
+      aborter = null;
+      appendNotice(msg || OFFLINE_TEXT, 'error');
+      return { kind: 'done' };
+    }
+    var parser = makeParser();
+    if (!res.body || typeof res.body.getReader !== 'function') {
+      var all = await res.text();
+      parser.feed(all);
+      parser.flush();
+      aborter = null;
+      return parser.result() || { kind: 'done' };
+    }
+    var reader = res.body.getReader();
+    var decoder = new TextDecoder();
+    var done = false;
+    try {
+      while (!done) {
+        var chunk = await reader.read();
+        if (chunk.done) break;
+        done = parser.feed(decoder.decode(chunk.value, { stream: true }));
+      }
+      if (!done) { done = parser.feed(decoder.decode()); }
+      if (!done) parser.flush();
+    } catch (err) {
+      aborter = null;
+      if (err && err.name === 'AbortError') return { kind: 'stopped' };
+      try { reader.cancel().catch(function () { }); } catch (e) { }
+      appendNotice(OFFLINE_TEXT, 'error');
+      return { kind: 'done' };
+    }
+    try { reader.cancel().catch(function () { }); } catch (e) { }
+    aborter = null;
+    return parser.result() || { kind: 'done' };
+  }
+
+  async function runTurn() {
+    if (busy) return;
+    busy = true;
+    stopRequested = false;
+    setBusyUi(true);
+    var item = { kind: 'assistant', text: '', steps: [], collapsed: false, finished: false };
+    cur = { item: item };
+    appendLog(item);
+    var rounds = 0;
+    var stopped = false;
+    try {
+      while (true) {
+        var outcome = await streamOnce();
+        if (stopRequested) { stopped = true; break; }
+        if (outcome && outcome.kind === 'tool_calls') {
+          if (rounds >= MAX_TOOL_ROUNDS) {
+            appendNotice('I stopped after ' + MAX_TOOL_ROUNDS + ' tool steps. Ask me again to keep going.', '');
+            break;
+          }
+          rounds++;
+          if (outcome.message) S.messages.push(outcome.message);
+          var calls = outcome.calls || [];
+          for (var i = 0; i < calls.length; i++) {
+            var call = calls[i];
+            if (stopRequested) {
+              S.messages.push({ role: 'tool', tool_call_id: call.id, content: JSON.stringify({ cancelled: true, reason: 'The person stopped this.' }) });
+              continue;
+            }
+            pushStep(call.label || labelOf(call.name));
+            var out = await runOneCall(call);
+            S.messages.push({ role: 'tool', tool_call_id: call.id, content: out });
+          }
+          saveStore();
+          if (stopRequested) { stopped = true; break; }
+          continue;
+        }
+        break;
+      }
+    } catch (err) {
+      appendNotice('Something went wrong in the demo. Try again.', 'error');
+    } finally {
+      finishItem(item);
+      busy = false;
+      cur = null;
+      aborter = null;
+      pendingConfirm = null;
+      setBusyUi(false);
+      if (stopped) appendNotice('Stopped.', '');
+      saveStore();
+    }
+  }
+
+  function labelOf(name) { return TOOLS[name] ? TOOLS[name].label : 'Working'; }
+
+  function validate(name, spec, a) {
+    if (!a || typeof a !== 'object' || Array.isArray(a)) return 'The arguments must be a JSON object.';
+    for (var k in a) if (Object.prototype.hasOwnProperty.call(a, k) && !spec.props[k]) return 'Unknown argument "' + k + '" for ' + name + '.';
+    for (var i = 0; i < spec.required.length; i++) {
+      var r = spec.required[i];
+      if (a[r] === undefined || a[r] === null) return 'Missing required argument "' + r + '".';
+    }
+    for (var key in a) {
+      if (!Object.prototype.hasOwnProperty.call(a, key)) continue;
+      var p = spec.props[key];
+      var v = a[key];
+      if (v === undefined || v === null || !p) continue;
+      if (p.t === 'string') {
+        if (typeof v !== 'string') return '"' + key + '" must be a string.';
+        if (p.maxLength && v.length > p.maxLength) return '"' + key + '" is longer than ' + p.maxLength + ' characters.';
+      } else if (p.t === 'number' || p.t === 'int') {
+        if (typeof v !== 'number' || !isFinite(v)) return '"' + key + '" must be a number.';
+        if (p.t === 'int' && Math.floor(v) !== v) return '"' + key + '" must be a whole number.';
+        if (p.min !== undefined && v < p.min) return '"' + key + '" must be at least ' + p.min + '.';
+        if (p.max !== undefined && v > p.max) return '"' + key + '" must be at most ' + p.max + '.';
+      } else if (p.t === 'boolean') {
+        if (typeof v !== 'boolean') return '"' + key + '" must be true or false.';
+      } else if (p.t === 'enum') {
+        if (p.v.indexOf(v) < 0) return '"' + key + '" must be one of: ' + p.v.join(', ') + '.';
+      } else if (p.t === 'stringArray') {
+        if (!Array.isArray(v)) return '"' + key + '" must be a list of strings.';
+        for (var si = 0; si < v.length; si++) if (typeof v[si] !== 'string') return '"' + key + '" must be a list of strings.';
+      } else if (p.t === 'intArray') {
+        if (!Array.isArray(v)) return '"' + key + '" must be a list of numbers.';
+        for (var ni = 0; ni < v.length; ni++) if (typeof v[ni] !== 'number' || Math.floor(v[ni]) !== v[ni]) return '"' + key + '" must be a list of whole numbers.';
+      }
+    }
+    return '';
+  }
+
+  async function runOneCall(call) {
+    var name = call && call.name;
+    var spec = TOOLS[name];
+    if (!spec) return JSON.stringify({ error: 'Unknown tool: ' + String(name) + '.' });
+    var args = {};
+    var raw = call.arguments;
+    if (typeof raw === 'string' && raw.trim()) {
+      try { args = JSON.parse(raw); } catch (e) {
+        return JSON.stringify({ error: 'The arguments were not valid JSON. Call the tool again with valid JSON.' });
+      }
+    } else if (raw && typeof raw === 'object') {
+      args = raw;
+    }
+    var problem = validate(name, spec, args);
+    if (problem) return JSON.stringify({ error: problem });
+    if (spec.role !== 'any' && state.role !== spec.role) {
+      return JSON.stringify({ error: 'This tool only works in the ' + spec.role + ' view. Call switch_role with role "' + spec.role + '" first.' });
+    }
+    if (spec.confirm) {
+      var ok = await confirmCard(name, args);
+      if (!ok) return JSON.stringify({ cancelled: true, reason: 'The person declined.' });
+    }
+    try {
+      return runTool(name, args);
+    } catch (e) {
+      return JSON.stringify({ error: 'The tool could not run in the demo: ' + (e && e.message ? e.message : 'unknown error') + '.' });
+    }
+  }
+
+  function confirmCard(name, args) {
+    return new Promise(function (resolve) {
+      var box = el('div', 'assistant-confirm');
+      var text = el('p', 'assistant-confirm-text');
+      text.textContent = confirmSentence(name, args);
+      var row = el('div', 'assistant-confirm-row');
+      var yes = el('button', 'assistant-btn assistant-btn-primary', { type: 'button' });
+      yes.textContent = 'Confirm';
+      var no = el('button', 'assistant-btn', { type: 'button' });
+      no.textContent = 'Cancel';
+      row.appendChild(yes);
+      row.appendChild(no);
+      box.appendChild(text);
+      box.appendChild(row);
+      refs.log.appendChild(box);
+      scrollToEnd();
+      var settled = false;
+      function finish(result) {
+        if (settled) return;
+        settled = true;
+        pendingConfirm = null;
+        if (box.parentNode) box.parentNode.removeChild(box);
+        resolve(result);
+      }
+      yes.addEventListener('click', function () { finish(true); });
+      no.addEventListener('click', function () { finish(false); });
+      pendingConfirm = { cancel: function () { finish(false); } };
+    });
+  }
+
+  function shiftOrNull(id) { return typeof id === 'number' ? job(id) : null; }
+
+  function confirmSentence(name, a) {
+    var j = shiftOrNull(a.shift_id);
+    var when = j ? day(j.date) + ' ' + j.start + '–' + j.end : '';
+    var pay = j ? earnings(j) + ' zł gross' : '';
+    if (name === 'express_interest') return 'Send interest in ' + (j ? j.title : 'shift ' + a.shift_id) + (when ? ', ' + when : '') + (pay ? ', ' + pay : '') + '?';
+    if (name === 'update_preferences') {
+      var bits = [];
+      if (a.skills) bits.push('skills ' + a.skills.join(', '));
+      if (a.days) bits.push(a.days.length + (a.days.length === 1 ? ' day' : ' days'));
+      if (a.start || a.end) bits.push((a.start || '…') + '–' + (a.end || '…'));
+      if (a.min_rate !== undefined) bits.push('at least ' + a.min_rate + ' zł/hour');
+      if (a.max_commute !== undefined) bits.push('up to ' + a.max_commute + ' min commute');
+      if (a.available !== undefined) bits.push(a.available ? 'available' : 'not available');
+      return 'Update your preferences: ' + (bits.length ? bits.join(', ') : 'new values') + '?';
+    }
+    if (name === 'send_chat_message') {
+      var title = j ? ' about ' + j.title : '';
+      var who = j ? ' to ' + j.company : '';
+      return 'Send "' + a.text + '"' + who + title + '?';
+    }
+    if (name === 'set_payday_goal') return 'Set your Payday goal to ' + a.target + ' zł gross in ' + a.max_hours + ' hours?';
+    if (name === 'build_payday_plan') {
+      if (a.mode === 'suggest') return 'Replace your Payday plan with the app suggestion?';
+      var ids = a.shift_ids || [];
+      return 'Replace your Payday plan with ' + ids.length + (ids.length === 1 ? ' shift' : ' shifts') + '?';
+    }
+    if (name === 'decide_candidate') return (a.decision === 'accept' ? 'Accept' : 'Decline') + ' ' + state.profile.name + "'s interest" + (j ? ' in ' + j.title + ' (' + when + ')' : '') + '?';
+    if (name === 'publish_shift') {
+      var t = a.title || (state.draft && state.draft.title) || 'this shift';
+      var c = a.company || (state.draft && state.draft.company) || '';
+      var dt = a.date || (state.draft && state.draft.date) || '';
+      var st = a.start || (state.draft && state.draft.start) || '';
+      var en = a.end || (state.draft && state.draft.end) || '';
+      var rt = a.rate !== undefined ? a.rate : (state.draft && state.draft.rate);
+      return 'Publish ' + t + (c ? ' at ' + c : '') + (dt ? ', ' + day(dt) : '') + ' ' + st + '–' + en + (rt ? ', ' + rt + ' zł/hour' : '') + '?';
+    }
+    return 'Run ' + name + '?';
+  }
+
+  function emit(obj) {
+    var text = JSON.stringify(obj);
+    if (text.length <= MAX_RESULT_CHARS) return text;
+    var copy = JSON.parse(JSON.stringify(obj));
+    var dropped = 0;
+    var guard = 0;
+    var arr = null;
+    while (text.length > RESULT_BUDGET && guard++ < 300) {
+      arr = biggestArray(copy);
+      if (!arr) break;
+      arr.pop();
+      dropped++;
+      text = JSON.stringify(copy);
+    }
+    if (dropped) { copy.omitted = dropped; text = JSON.stringify(copy); }
+    return text;
+  }
+
+  function biggestArray(obj) {
+    var best = null;
+    var bestLen = 0;
+    (function walk(o, depth) {
+      if (!o || typeof o !== 'object' || depth > 3) return;
+      if (Array.isArray(o)) { if (o.length > bestLen) { best = o; bestLen = o.length; } return; }
+      for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) walk(o[k], depth + 1);
+    })(obj, 0);
+    return best;
+  }
+
+  function iso(ts) { return ts ? new Date(ts).toISOString() : null; }
+
+  function fitReasons(j) {
+    var f = fit(j);
+    var r = [];
+    if (!f.available) r.push('outside your availability');
+    if (!f.travel) r.push('commute longer than your limit');
+    if (!f.pay) r.push('pay below your minimum');
+    if (f.conflict) r.push('overlaps a confirmed shift');
+    return r;
+  }
+
+  function shiftRow(j, f) {
+    var ap = application(j.id);
+    return {
+      id: j.id, title: j.title, company: j.company, category: j.category, area: j.area,
+      date: j.date, start: j.start, end: j.end, rate: j.rate, gross_pay: Number(earnings(j)),
+      commute_min: j.commute, requirements: j.requirements,
+      match: { score: f.score, skills: f.skills, available: f.available, commute_ok: f.travel, pay_ok: f.pay, conflict: f.conflict },
+      eligible: f.eligible,
+      does_not_fit: f.eligible ? undefined : fitReasons(j),
+      larp_lock: j.larpGate || 0,
+      connection: ap ? ap.status : null,
+      saved: state.saved.indexOf(j.id) >= 0
+    };
+  }
+
+  function runTool(name, a) {
+    switch (name) {
+      case 'get_app_overview': return emit(appOverview());
+      case 'search_shifts': return searchShifts(a);
+      case 'get_shift': return getShift(a);
+      case 'get_profile': return getProfileTool();
+      case 'list_connections': return listConnections(a);
+      case 'get_conversation': return getConversation(a);
+      case 'get_payday_plan': return getPaydayPlan();
+      case 'get_larp_status': return getLarpStatus();
+      case 'get_backstage': return getBackstage();
+      case 'get_employer_dashboard': return getEmployerDashboard();
+      case 'open_page': return openPage(a);
+      case 'show_shift': return showShift(a);
+      case 'switch_role': return switchRoleTool(a);
+      case 'save_shift': return saveShiftTool(a);
+      case 'pass_shift': return passShiftTool(a);
+      case 'express_interest': return expressInterest(a);
+      case 'update_preferences': return updatePreferences(a);
+      case 'send_chat_message': return sendChatMessage(a);
+      case 'set_payday_goal': return setPaydayGoal(a);
+      case 'build_payday_plan': return buildPaydayPlan(a);
+      case 'decide_candidate': return decideCandidate(a);
+      case 'draft_shift': return draftShift(a);
+      case 'publish_shift': return publishShift(a);
+      default: return JSON.stringify({ error: 'Unknown tool: ' + name + '.' });
+    }
+  }
+
+  function appOverview() {
+    var counts = {};
+    (state.applications || []).forEach(function (x) { counts[x.status] = (counts[x.status] || 0) + 1; });
+    var fitting = state.jobs.filter(function (j) { return unlocked(j) && fit(j).eligible; });
+    var pages = (menus[state.role] || []).map(function (x) { return x[0]; });
+    return {
+      role: state.role,
+      page: state.page,
+      today: dayOffset(0),
+      available_pages: pages,
+      intro_finished: !!state.onboarded,
+      profile: {
+        name: state.profile.name, title: activeTitle(), skills: state.profile.skills,
+        days: state.profile.days, start: state.profile.start, end: state.profile.end,
+        min_rate: state.profile.minRate, max_commute: state.profile.maxCommute, available: state.profile.available
+      },
+      shifts_that_fit: fitting.length,
+      connections: counts,
+      saved_shifts: (state.saved || []).slice(0, 20),
+      larp_points: (state.larp && state.larp.points) || 0,
+      backstage_active: !!(state.backstage && state.backstage.active)
+    };
+  }
+
+  function searchShifts(a) {
+    var limit = a.limit || 8;
+    var sort = a.sort || 'match';
+    var includeNon = a.include_non_fitting === true;
+    var q = a.query ? String(a.query).toLowerCase().split(/\s+/).filter(Boolean) : [];
+    var rows = [];
+    state.jobs.forEach(function (j) {
+      if (!unlocked(j)) return;
+      if (state.skipped.indexOf(j.id) >= 0 && a.include_passed !== true) return;
+      if (a.only_saved === true) {
+        if (state.saved.indexOf(j.id) < 0) return;
+      } else if (application(j.id)) {
+        return;
+      }
+      if (a.category && j.category !== a.category) return;
+      if (a.date && j.date !== a.date) return;
+      if (a.min_rate !== undefined && !(j.rate >= a.min_rate)) return;
+      if (a.max_commute !== undefined && !(j.commute <= a.max_commute)) return;
+      if (q.length) {
+        var hay = (j.title + ' ' + j.company + ' ' + j.area + ' ' + j.description).toLowerCase();
+        for (var w = 0; w < q.length; w++) if (hay.indexOf(q[w]) < 0) return;
+      }
+      var f = fit(j);
+      if (!includeNon && !f.eligible) return;
+      rows.push({ j: j, f: f, score: f.score });
+    });
+    rows.sort(function (x, y) {
+      if (sort === 'pay') return y.j.rate - x.j.rate;
+      if (sort === 'commute') return x.j.commute - y.j.commute;
+      return y.score - x.score;
+    });
+    var total = rows.length;
+    var out = rows.slice(0, limit).map(function (r) { return shiftRow(r.j, r.f); });
+    var payload = { shifts: out, total_matching: total, returned: out.length, today: dayOffset(0) };
+    if (total > out.length) payload.omitted = total - out.length;
+    return emit(payload);
+  }
+
+  function getShift(a) {
+    var j = job(a.shift_id);
+    if (!j) return emit({ error: 'There is no shift with id ' + a.shift_id + '.' });
+    var f = fit(j);
+    var ap = application(j.id);
+    return emit({
+      id: j.id, title: j.title, company: j.company, category: j.category, area: j.area,
+      date: j.date, start: j.start, end: j.end, rate: j.rate, gross_pay: Number(earnings(j)),
+      commute_min: j.commute, requirements: j.requirements, description: j.description,
+      match: { score: f.score, skills: f.skills, available: f.available, commute_ok: f.travel, pay_ok: f.pay, conflict: f.conflict },
+      eligible: f.eligible,
+      does_not_fit: f.eligible ? undefined : fitReasons(j),
+      larp: { locked: !unlocked(j), required_points: j.larpGate || 0, points: (state.larp && state.larp.points) || 0 },
+      payday: { in_plan: !!(state.payday && state.payday.selected.indexOf(j.id) >= 0), reason: (state.payday ? planReason(j) : '') || null },
+      connection: ap ? { status: ap.status, messages: (ap.messages || []).length } : null,
+      saved: state.saved.indexOf(j.id) >= 0
+    });
+  }
+
+  function getProfileTool() {
+    return emit({
+      name: state.profile.name, title: activeTitle(), skills: state.profile.skills,
+      days: state.profile.days, start: state.profile.start, end: state.profile.end,
+      min_rate: state.profile.minRate, max_commute: state.profile.maxCommute, available: state.profile.available
+    });
+  }
+
+  function listConnections(a) {
+    var rows = (state.applications || []).filter(function (x) { return !a.status || x.status === a.status; });
+    var out = rows.map(function (x) {
+      var j = job(x.jobId);
+      var msgs = x.messages || [];
+      var last = msgs.length ? msgs[msgs.length - 1] : null;
+      return {
+        shift_id: x.jobId,
+        title: j ? j.title : null,
+        company: j ? j.company : null,
+        status: x.status,
+        applied_at: iso(x.appliedAt),
+        matched_at: iso(x.matchedAt),
+        signed_at: iso(x.signedAt),
+        completed_at: iso(x.completedAt),
+        declined_at: iso(x.declinedAt),
+        worker_rating: x.workerRating || 0,
+        employer_rating: x.employerRating || 0,
+        larp_earned: x.larpEarned || 0,
+        last_message: last ? { from: last.role, text: last.text } : null
+      };
+    });
+    return emit({ connections: out, total: out.length });
+  }
+
+  function getConversation(a) {
+    var ap = application(a.shift_id);
+    if (!ap) return emit({ error: 'There is no connection for shift ' + a.shift_id + ' yet.' });
+    var j = job(a.shift_id);
+    var out = (ap.messages || []).map(function (m) {
+      return { from: m.role === 'system' ? 'LARPd' : (m.role === 'worker' ? state.profile.name : (j ? j.company : 'Employer')), from_role: m.role, text: m.text };
+    });
+    return emit({ shift_id: a.shift_id, title: j ? j.title : null, status: ap.status, messages: out });
+  }
+
+  function getPaydayPlan() {
+    var pd = state.payday || { target: 600, maxHours: 24, selected: [] };
+    var jobs = planJobs();
+    var pay = Number(planPay(jobs));
+    var hrs = planHours(jobs);
+    return emit({
+      target: pd.target,
+      max_hours: pd.maxHours,
+      planned: jobs.map(function (j) {
+        return { id: j.id, title: j.title, date: j.date, start: j.start, end: j.end, gross_pay: Number(earnings(j)), hours: hours(j) };
+      }),
+      totals: { gross_pay: pay, hours: hrs },
+      progress_percent: pd.target ? Math.round(pay / pd.target * 100) : 0,
+      remaining_pay: Math.max(0, pd.target - pay),
+      remaining_hours: Math.max(0, pd.maxHours - hrs),
+      warnings: planWarnings()
+    });
+  }
+
+  function getLarpStatus() {
+    var larp = state.larp || { points: 0, goal: 0 };
+    var locked = state.jobs.filter(function (j) { return j.larpGate && larp.points < j.larpGate; });
+    var gate = 0;
+    locked.forEach(function (j) { if (!gate || j.larpGate < gate) gate = j.larpGate; });
+    var pending = (state.applications || []).filter(function (x) { return x.status === 'completed' && !x.employerRating; }).length;
+    var g = (typeof larpGoals !== 'undefined' && larpGoals[larp.goal]) ? larpGoals[larp.goal] : null;
+    return emit({
+      points: larp.points || 0,
+      points_pending_rating: pending,
+      rating_rewards: (typeof ratingRewards !== 'undefined' ? ratingRewards.slice(1) : [10, 20, 50, 100, 150]),
+      next_unlock: gate ? { points: gate, missing: gate - (larp.points || 0) } : null,
+      locked_shifts: locked.slice(0, 12).map(function (j) { return { id: j.id, title: j.title, required_points: j.larpGate }; }),
+      dream_goal: g ? { name: g.name, persona: g.persona, cost: dreamCost(g), currency: g.currency } : null,
+      usd_rate: larp.usdRate || 4,
+      lore_level: loreLevel(),
+      title: activeTitle(),
+      titles: earnedTitles().map(function (t) { return t.name; })
+    });
+  }
+
+  function getBackstage() {
+    var b = state.backstage || { active: false, interests: [], alerts: false };
+    var jobs = state.jobs.filter(function (j) { return j.collection && j.collection !== 'Everyday shifts'; });
+    return emit({
+      active: !!b.active,
+      interests: b.interests || [],
+      drop_alerts: !!b.alerts,
+      shifts: jobs.slice(0, 12).map(function (j) {
+        return { id: j.id, title: j.title, company: j.company, collection: j.collection, rate: j.rate, date: j.date, start: j.start, end: j.end, fits_now: fit(j).eligible };
+      }),
+      total_shifts: jobs.length
+    });
+  }
+
+  function getEmployerDashboard() {
+    var apps = state.applications || [];
+    var waiting = apps.filter(function (x) { return x.status === 'applied'; });
+    var matched = apps.filter(function (x) { return x.status !== 'applied' && x.status !== 'declined'; });
+    var m = metrics();
+    var posted = state.jobs.map(function (j) {
+      var ap = application(j.id);
+      return { id: j.id, title: j.title, company: j.company, date: j.date, start: j.start, end: j.end, rate: j.rate, status: ap ? ap.status : 'open' };
+    });
+    return emit({
+      posted: posted.slice(0, 12),
+      posted_total: posted.length,
+      waiting: waiting.map(function (x) {
+        var j = job(x.jobId);
+        var f = j ? fit(j) : null;
+        return { shift_id: x.jobId, title: j ? j.title : null, worker: state.profile.name, fit_score: f ? f.score : null, eligible: f ? f.eligible : false };
+      }),
+      matches: matched.slice(0, 12).map(function (x) {
+        var j = job(x.jobId);
+        return { shift_id: x.jobId, title: j ? j.title : null, status: x.status };
+      }),
+      insights: {
+        applied: m.a.length, matched: m.matched.length, confirmed: m.signed.length, completed: m.completed.length,
+        avg_minutes_to_confirm: m.fill, conversion_percent: m.conversion, completion_percent: m.completion
+      }
+    });
+  }
+
+  function openPage(a) {
+    var pages = (menus[state.role] || []).map(function (x) { return x[0]; });
+    if (pages.indexOf(a.page) < 0) {
+      return emit({ error: 'The page "' + a.page + '" is not available in the ' + state.role + ' view. Available pages: ' + pages.join(', ') + '. Call switch_role first if you need the other view.' });
+    }
+    go(a.page);
+    return emit({ ok: true, page: state.page });
+  }
+
+  function showShift(a) {
+    var j = job(a.shift_id);
+    if (!j) return emit({ error: 'There is no shift with id ' + a.shift_id + '.' });
+    details(j.id);
+    return emit({ ok: true, shift_id: j.id, title: j.title, note: 'The Details dialog is open on screen.' });
+  }
+
+  function switchRoleTool(a) {
+    if (state.role !== a.role) setRole(a.role);
+    return emit({ ok: true, role: state.role, page: state.page });
+  }
+
+  function saveShiftTool(a) {
+    var j = job(a.shift_id);
+    if (!j) return emit({ error: 'There is no shift with id ' + a.shift_id + '.' });
+    var has = state.saved.indexOf(j.id) >= 0;
+    if (has !== a.saved) saveJob(j.id);
+    return emit({ ok: true, shift_id: j.id, title: j.title, saved: state.saved.indexOf(j.id) >= 0 });
+  }
+
+  function passShiftTool(a) {
+    var j = job(a.shift_id);
+    if (!j) return emit({ error: 'There is no shift with id ' + a.shift_id + '.' });
+    if (state.skipped.indexOf(j.id) >= 0) return emit({ ok: true, shift_id: j.id, already_passed: true });
+    skip(j.id);
+    return emit({ ok: true, shift_id: j.id, title: j.title, passed: true, note: 'It left Discover. Undo last pass brings it back.' });
+  }
+
+  function expressInterest(a) {
+    var j = job(a.shift_id);
+    if (!j) return emit({ error: 'There is no shift with id ' + a.shift_id + '.' });
+    if (application(j.id)) return emit({ error: 'Interest was already sent for ' + j.title + '.' });
+    if (!unlocked(j)) return emit({ error: 'That shift needs ' + j.larpGate + ' LARP points and you have ' + ((state.larp && state.larp.points) || 0) + '.' });
+    var f = fit(j);
+    if (!f.eligible) return emit({ error: 'That shift no longer fits your availability: ' + fitReasons(j).join(', ') + '.' });
+    apply(j.id);
+    if (!application(j.id)) return emit({ error: 'The demo did not send the interest. Ask the person to try the button.' });
+    return emit({ ok: true, shift_id: j.id, title: j.title, status: 'applied', note: 'The company replies in a few seconds.' });
+  }
+
+  var TIME_RE = /^([01][0-9]|2[0-3]):[0-5][0-9]$/;
+  var DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+  function updatePreferences(a) {
+    var p = Object.assign({}, state.profile);
+    var changed = [];
+    if (a.available !== undefined) { p.available = a.available; changed.push('available'); }
+    if (a.skills !== undefined) { p.skills = a.skills.slice(); changed.push('skills'); }
+    if (a.days !== undefined) {
+      for (var d = 0; d < a.days.length; d++) if (!DATE_RE.test(a.days[d])) return emit({ error: '"' + a.days[d] + '" is not a date in YYYY-MM-DD form.' });
+      p.days = a.days.slice();
+      changed.push('days');
+    }
+    if (a.start !== undefined) { if (!TIME_RE.test(a.start)) return emit({ error: 'The start time must be HH:MM.' }); p.start = a.start; changed.push('start'); }
+    if (a.end !== undefined) { if (!TIME_RE.test(a.end)) return emit({ error: 'The end time must be HH:MM.' }); p.end = a.end; changed.push('end'); }
+    if (a.min_rate !== undefined) { p.minRate = a.min_rate; changed.push('min_rate'); }
+    if (a.max_commute !== undefined) { p.maxCommute = a.max_commute; changed.push('max_commute'); }
+    if (!changed.length) return emit({ error: 'Send at least one preference to change.' });
+    if (minutes(p.end) <= minutes(p.start)) return emit({ error: 'Choose an end time after your start time.' });
+    state.profile = p;
+    persist();
+    render();
+    var fitting = state.jobs.filter(function (j) { return unlocked(j) && fit(j).eligible; }).length;
+    return emit({ ok: true, changed: changed, profile: { skills: p.skills, days: p.days, start: p.start, end: p.end, min_rate: p.minRate, max_commute: p.maxCommute, available: p.available }, shifts_that_fit: fitting });
+  }
+
+  function sendChatMessage(a) {
+    var ap = application(a.shift_id);
+    if (!ap) return emit({ error: 'There is no connection for shift ' + a.shift_id + ' yet.' });
+    if (ap.status === 'applied' || ap.status === 'declined') return emit({ error: 'There is no open chat for that connection yet.' });
+    var text = String(a.text || '').trim();
+    if (!text) return emit({ error: 'The message is empty.' });
+    ap.messages.push({ role: state.role, text: text });
+    persist();
+    render();
+    if (typeof modal !== 'undefined' && modal && modal.open && typeof chat === 'function') {
+      try { chat(a.shift_id); } catch (e) { }
+    }
+    return emit({ ok: true, shift_id: a.shift_id, from: state.role, text: text });
+  }
+
+  function setPaydayGoal(a) {
+    if (!state.payday) state.payday = { target: 600, maxHours: 24, selected: [] };
+    state.payday.target = a.target;
+    state.payday.maxHours = a.max_hours;
+    persist();
+    render();
+    return emit({ ok: true, target: state.payday.target, max_hours: state.payday.maxHours });
+  }
+
+  function buildPaydayPlan(a) {
+    if (!state.payday) state.payday = { target: 600, maxHours: 24, selected: [] };
+    if (a.mode === 'suggest') {
+      buildPlan();
+      return emit({ ok: true, mode: 'suggest', planned: planJobs().map(function (j) { return j.id; }), gross_pay: Number(planPay()), hours: planHours(), warnings: planWarnings() });
+    }
+    var ids = a.shift_ids || [];
+    if (!ids.length) return emit({ error: 'Give at least one shift id, or use mode "suggest".' });
+    var selected = [];
+    var rejected = [];
+    for (var i = 0; i < ids.length; i++) {
+      var id = ids[i];
+      var j = job(id);
+      if (!j) { rejected.push({ shift_id: id, reason: 'No shift with that id.' }); continue; }
+      var dup = false;
+      for (var s = 0; s < selected.length; s++) if (selected[s].id === id) dup = true;
+      if (dup) { rejected.push({ shift_id: id, reason: 'Listed twice.' }); continue; }
+      var reason = planReason(j, selected);
+      if (reason) rejected.push({ shift_id: id, reason: reason }); else selected.push(j);
+    }
+    state.payday.selected = selected.map(function (x) { return x.id; });
+    persist();
+    render();
+    return emit({
+      ok: true, mode: 'these_shifts',
+      planned: selected.map(function (x) { return { id: x.id, title: x.title }; }),
+      rejected: rejected,
+      gross_pay: Number(planPay(selected)),
+      hours: planHours(selected),
+      warnings: planWarnings()
+    });
+  }
+
+  function decideCandidate(a) {
+    var ap = application(a.shift_id);
+    if (!ap) return emit({ error: 'Nobody is waiting on shift ' + a.shift_id + '.' });
+    if (ap.status !== 'applied') return emit({ error: 'That interest is already "' + ap.status + '".' });
+    var j = job(a.shift_id);
+    if (a.decision === 'accept') {
+      if (!j) return emit({ error: 'There is no shift with id ' + a.shift_id + '.' });
+      if (!fit(j).eligible) return emit({ error: 'This request cannot be accepted: the worker is outside their preferences now.' });
+      acceptWorker(j.id);
+    } else {
+      declineWorker(a.shift_id);
+    }
+    return emit({ ok: true, shift_id: a.shift_id, decision: a.decision, status: application(a.shift_id) ? application(a.shift_id).status : null });
+  }
+
+  function draftShift(a) {
+    var brief = String(a.brief || '');
+    if (!brief.trim()) return emit({ error: 'The brief is empty.' });
+    var d = parseBrief(brief);
+    state.draft = d;
+    persist();
+    go('studio');
+    var out = {
+      title: d.title, company: d.company, area: d.area, category: d.category, rate: d.rate,
+      date: d.date, start: d.start, end: d.end, requirements: d.requirements, missing: d.missing
+    };
+    if (d.missing && d.missing.length) out.note = 'Ask the person for the missing details before publishing.';
+    return emit({ ok: true, draft: out, missing: d.missing || [] });
+  }
+
+  function publishShift(a) {
+    var d = state.draft ? Object.assign({}, state.draft) : {};
+    if (a.title !== undefined) d.title = a.title;
+    if (a.company !== undefined) d.company = a.company;
+    if (a.area !== undefined) d.area = a.area;
+    if (a.rate !== undefined) d.rate = a.rate;
+    if (a.date !== undefined) d.date = a.date;
+    if (a.start !== undefined) d.start = a.start;
+    if (a.end !== undefined) d.end = a.end;
+    if (a.skills !== undefined) d.requirements = a.skills.slice();
+    if (a.category !== undefined) d.category = a.category;
+    var missing = [];
+    if (!d.title) missing.push('title');
+    if (!d.company) missing.push('company');
+    if (!d.area) missing.push('area');
+    if (!(Number(d.rate) > 0)) missing.push('rate');
+    if (!d.date) missing.push('date');
+    if (!d.start) missing.push('start');
+    if (!d.end) missing.push('end');
+    if (!Array.isArray(d.requirements) || !d.requirements.length) missing.push('skills');
+    if (!d.category) missing.push('category');
+    if (missing.length) return emit({ error: 'The draft still needs: ' + missing.join(', ') + '.' });
+    if (!TIME_RE.test(d.start) || !TIME_RE.test(d.end)) return emit({ error: 'Times must be HH:MM.' });
+    if (minutes(d.end) <= minutes(d.start)) return emit({ error: 'For this demo, choose an end time later on the same day.' });
+    var id = Math.max.apply(null, state.jobs.map(function (j) { return j.id; })) + 1;
+    var job2 = {
+      id: id, title: d.title, company: d.company, area: d.area, date: d.date, start: d.start, end: d.end,
+      rate: Number(d.rate), requirements: d.requirements.slice(),
+      category: d.category,
+      scene: d.category === 'Events' ? 'event' : d.category === 'Retail' ? 'retail' : 'cafe',
+      commute: d.commute || 15,
+      description: d.brief || d.description || '',
+      urgent: true
+    };
+    state.jobs.unshift(job2);
+    state.draft = null;
+    go('overview');
+    persist();
+    return emit({ ok: true, shift_id: id, title: job2.title, company: job2.company, date: job2.date, start: job2.start, end: job2.end, rate: job2.rate, note: 'Published to the demo. Switch to the worker view to discover it.' });
+  }
+
+  function waitText(ms) {
+    var mins = Math.max(1, Math.ceil(ms / 60000));
+    var h = Math.floor(mins / 60);
+    var m = mins % 60;
+    return h ? (h + ' h ' + m + ' min') : (m + ' min');
+  }
+
+  function two(n) { return (n < 10 ? '0' : '') + n; }
+
+  function applyClosed(data) {
+    var reopen = Date.parse(data && data.reopens_at ? data.reopens_at : '');
+    if (!isFinite(reopen)) { appendNotice(data && data.text ? data.text : 'The assistant is resting right now.', ''); return; }
+    closedInfo = {
+      reopen: reopen,
+      proxyNow: data.now ? Date.parse(data.now) : Date.now(),
+      localNow: Date.now()
+    };
+    if (!isFinite(closedInfo.proxyNow)) closedInfo.proxyNow = Date.now();
+    if (data.team_rejected) {
+      try { sessionStorage.removeItem(TEAM_KEY); } catch (e) { }
+      if (refs.teamMsg) refs.teamMsg.textContent = "That passphrase didn't work.";
+    }
+    renderClosed();
+    if (refs.closed) refs.closed.hidden = false;
+    setComposerEnabled(false);
+    startClosedTimer();
+  }
+
+  function renderClosed() {
+    if (!refs.closed || !closedInfo) return;
+    var elapsed = Date.now() - closedInfo.localNow;
+    var proxyNow = closedInfo.proxyNow + elapsed;
+    var remain = closedInfo.reopen - proxyNow;
+    var offset = closedInfo.proxyNow - closedInfo.localNow;
+    var localWhen = new Date(closedInfo.reopen - offset);
+    var utcWhen = new Date(closedInfo.reopen);
+    if (remain <= 0) {
+      refs.closed.textContent = 'The assistant should be back any moment.';
+      return;
+    }
+    var text = 'The assistant is resting. Try again at ' + two(localWhen.getHours()) + ':' + two(localWhen.getMinutes()) + ' your time (' +
+      two(utcWhen.getUTCHours()) + ':' + two(utcWhen.getUTCMinutes()) + ' UTC), in ' + waitText(remain) + '.';
+    refs.closed.textContent = text;
+  }
+
+  function startClosedTimer() {
+    if (closedTimer) return;
+    closedTimer = setInterval(function () {
+      if (!closedInfo) return;
+      var remain = closedInfo.reopen - (closedInfo.proxyNow + (Date.now() - closedInfo.localNow));
+      if (remain <= 0) {
+        stopClosedTimer();
+        checkStatus();
+        return;
+      }
+      renderClosed();
+    }, 30000);
+  }
+
+  function stopClosedTimer() {
+    if (closedTimer) { clearInterval(closedTimer); closedTimer = null; }
+  }
+
+  function hideClosed() {
+    stopClosedTimer();
+    closedInfo = null;
+    if (refs.closed) refs.closed.hidden = true;
+    setComposerEnabled(true);
+  }
+
+  function setComposerEnabled(on) {
+    if (!refs.input) return;
+    refs.input.disabled = !on;
+    refs.send.disabled = !on;
+    if (on) { refs.input.placeholder = 'Ask about shifts, pay or your plan…'; }
+    else { refs.input.placeholder = 'The assistant is resting.'; }
+  }
+
+  async function checkStatus() {
+    if (!base) return;
+    var headers = {};
+    var team = getTeam();
+    if (team) headers['x-jobex-team'] = team;
+    var res = null;
+    try {
+      res = await fetch(base + '/v1/status', { headers: headers, cache: 'no-store' });
+    } catch (e) {
+      if (refs.closed) { refs.closed.hidden = true; }
+      setComposerEnabled(true);
+      return;
+    }
+    if (!res.ok) { setComposerEnabled(true); return; }
+    var d = null;
+    try { d = await res.json(); } catch (e) { setComposerEnabled(true); return; }
+    if (d && d.open) { hideClosed(); return; }
+    if (d) {
+      if (d.team_rejected) {
+        try { sessionStorage.removeItem(TEAM_KEY); } catch (e) { }
+        if (refs.teamMsg) refs.teamMsg.textContent = "That passphrase didn't work.";
+      }
+      applyClosed(d);
+    }
+  }
+
+  async function submitTeam(ev) {
+    ev.preventDefault();
+    if (!base || !refs.teamInput) return;
+    var pass = refs.teamInput.value;
+    if (!pass) return;
+    refs.teamMsg.textContent = 'Checking…';
+    var res = null;
+    try {
+      res = await fetch(base + '/v1/status', { headers: { 'x-jobex-team': pass }, cache: 'no-store' });
+    } catch (e) {
+      refs.teamMsg.textContent = "That passphrase didn't work.";
+      return;
+    }
+    var d = null;
+    try { d = await res.json(); } catch (e) { d = null; }
+    if (d && d.team === true) {
+      try { sessionStorage.setItem(TEAM_KEY, pass); } catch (e) { }
+      refs.teamInput.value = '';
+      refs.teamMsg.textContent = '';
+      refs.teamForm.hidden = true;
+      hideClosed();
+      checkStatus();
+    } else {
+      refs.teamMsg.textContent = "That passphrase didn't work.";
+    }
+  }
+
+  function installResetHook() {
+    try {
+      if (typeof window.hardReset !== 'function') return;
+      if (window.hardReset.__larpdAssistant) return;
+      var orig = window.hardReset;
+      var wrapped = function () {
+        try { clearStore(); } catch (e) { }
+        return orig.apply(this, arguments);
+      };
+      wrapped.__larpdAssistant = true;
+      window.hardReset = wrapped;
+    } catch (e) { }
+  }
+
+  function boot() {
+    base = resolveBase();
+    if (!base) return;
+    try {
+      if (typeof state === 'undefined' || typeof fit !== 'function' || typeof go !== 'function') return;
+    } catch (e) { return; }
+    installResetHook();
+    loadStore();
+    document.documentElement.classList.add('assistant-on');
+    buildUi();
+    renderLog();
+    setComposerEnabled(true);
+  }
+
+  boot();
+})();
+</script>
+</body></html>

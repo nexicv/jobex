@@ -1,0 +1,9 @@
+# /etc/caddy/Caddyfile  (Created by Claude Opus 5.5, 2026-11-06.)
+# Caddy gets and renews the HTTPS certificate for this name by itself.
+jobex-ai.duckdns.org {
+	# No compression, and flush at once, so streamed answers arrive as they are written.
+	reverse_proxy 127.0.0.1:8787 {
+		flush_interval -1
+	}
+	header -Server
+}

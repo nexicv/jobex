@@ -1,0 +1,725 @@
+{
+  "_about": "Tools the Jobex assistant can call. Written by Claude Opus 5.5, 2026-11-06. The proxy sends `tools` to DeepSeek after removing every `x_jobex` block. The page runs each call against its own state and returns JSON. `x_jobex.confirm` = the page shows a confirm card before running it; `role` = which demo role the tool works in (the page switches role only through switch_role); `runs` = the existing app function the implementation should reuse; `label`/`label_pl` = the step shown in the chat panel while the tool runs.",
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "get_app_overview",
+        "description": "Current role and page, the worker's profile summary, how many shifts fit, connection counts by status, saved shifts, LARP points, whether the Backstage demo membership is on, and whether the intro was finished. Call this first when you need context.",
+        "parameters": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false
+        }
+      },
+      "x_jobex": {
+        "label": "Checking where you are in the app",
+        "label_pl": "Sprawdzam, gdzie jesteś w aplikacji",
+        "confirm": false,
+        "role": "any",
+        "runs": "state, currentJobs(), application()"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "search_shifts",
+        "description": "Search demo shifts. By default returns only shifts that fit the worker (the same set Discover shows). Each result has id, title, company, category, area, date, start, end, hourly gross rate, estimated gross pay, commute minutes, required skills, match score with reasons, eligible flag, LARP lock and connection status.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Words to match in title, company, area or description."
+            },
+            "category": {
+              "type": "string",
+              "enum": [
+                "Hospitality",
+                "Events",
+                "Retail"
+              ]
+            },
+            "date": {
+              "type": "string",
+              "description": "YYYY-MM-DD. Use get_app_overview to learn today's date."
+            },
+            "min_rate": {
+              "type": "number",
+              "description": "Minimum gross zł per hour."
+            },
+            "max_commute": {
+              "type": "number",
+              "description": "Longest commute in minutes."
+            },
+            "include_non_fitting": {
+              "type": "boolean",
+              "description": "Also return shifts outside the worker's preferences, with the reason they don't fit.",
+              "default": false
+            },
+            "include_passed": {
+              "type": "boolean",
+              "default": false
+            },
+            "only_saved": {
+              "type": "boolean",
+              "default": false
+            },
+            "sort": {
+              "type": "string",
+              "enum": [
+                "match",
+                "pay",
+                "commute"
+              ],
+              "default": "match"
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20,
+              "default": 8
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "x_jobex": {
+        "label": "Finding suitable shifts",
+        "label_pl": "Szukam pasujących zmian",
+        "confirm": false,
+        "role": "any",
+        "runs": "state.jobs, fit(), unlocked(), application()"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_shift",
+        "description": "Full details of one shift: description, requirements, gross pay, the match breakdown (skills, availability, commute, pay, conflicts), LARP lock, Payday plan membership and the connection status if any.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "shift_id": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "shift_id"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "x_jobex": {
+        "label": "Reading the shift details",
+        "label_pl": "Czytam szczegóły zmiany",
+        "confirm": false,
+        "role": "any",
+        "runs": "job(), fit(), planReason()"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_profile",
+        "description": "The worker profile: name, skills, available days, daily hours, minimum gross rate, longest commute, availability switch and current profile title.",
+        "parameters": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false
+        }
+      },
+      "x_jobex": {
+        "label": "Reading your profile",
+        "label_pl": "Czytam Twój profil",
+        "confirm": false,
+        "role": "any",
+        "runs": "state.profile, activeTitle()"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "list_connections",
+        "description": "Every shift the worker showed interest in, with status (applied, matched, contract, signed, completed, declined), timestamps, ratings and the last chat message.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "applied",
+                "matched",
+                "contract",
+                "signed",
+                "completed",
+                "declined"
+              ]
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "x_jobex": {
+        "label": "Checking your connections",
+        "label_pl": "Sprawdzam Twoje połączenia",
+        "confirm": false,
+        "role": "any",
+        "runs": "state.applications"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_conversation",
+        "description": "Chat messages for one connection, oldest first, with who sent each (worker, employer or system).",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "shift_id": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "shift_id"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "x_jobex": {
+        "label": "Reading the chat",
+        "label_pl": "Czytam czat",
+        "confirm": false,
+        "role": "any",
+        "runs": "application().messages"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_payday_plan",
+        "description": "Payday Lab: earnings target, hours budget, planned shifts with gross pay and hours, totals, progress toward the target and any warnings.",
+        "parameters": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false
+        }
+      },
+      "x_jobex": {
+        "label": "Reading your Payday plan",
+        "label_pl": "Czytam Twój plan Payday",
+        "confirm": false,
+        "role": "worker",
+        "runs": "state.payday, planJobs(), planPay(), planHours(), planWarnings()"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_larp_status",
+        "description": "LARP club: points (awarded from the employer's 1-5 star rating of each completed shift: 10/20/50/100/150), points still pending a rating, next unlock, locked shifts and their thresholds, the chosen dream goal with its persona and cost, the demo USD-to-zł rate, lore slider level and earned titles.",
+        "parameters": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false
+        }
+      },
+      "x_jobex": {
+        "label": "Checking your LARP progress",
+        "label_pl": "Sprawdzam postępy LARP",
+        "confirm": false,
+        "role": "any",
+        "runs": "state.larp, ratingRewards, loreLevel(), earnedTitles(), larpGoals"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_backstage",
+        "description": "Backstage demo membership: whether it is on, the chosen interests (Film & music, Fashion & design), whether demo drop alerts are on, and the Backstage shifts with their collection, pay, time and whether each fits the worker now. Membership never changes eligibility.",
+        "parameters": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false
+        }
+      },
+      "x_jobex": {
+        "label": "Checking Backstage",
+        "label_pl": "Sprawdzam Backstage",
+        "confirm": false,
+        "role": "worker",
+        "runs": "state.backstage, state.jobs (collection), fit()"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_employer_dashboard",
+        "description": "Employer view: posted shifts with status, workers waiting for a decision with their fit, current matches and the Insights metrics.",
+        "parameters": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false
+        }
+      },
+      "x_jobex": {
+        "label": "Reading your employer dashboard",
+        "label_pl": "Czytam panel pracodawcy",
+        "confirm": false,
+        "role": "employer",
+        "runs": "state.jobs, state.applications, metrics()"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "open_page",
+        "description": "Show a page of the app. Worker pages: discover, matches (Connections), shifts (My shifts), payday, profile, larp, backstage. Employer pages: overview, studio, candidates, analytics.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "page": {
+              "type": "string",
+              "enum": [
+                "discover",
+                "matches",
+                "shifts",
+                "payday",
+                "profile",
+                "larp",
+                "backstage",
+                "overview",
+                "studio",
+                "candidates",
+                "analytics"
+              ]
+            }
+          },
+          "required": [
+            "page"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "x_jobex": {
+        "label": "Opening the page",
+        "label_pl": "Otwieram stronę",
+        "confirm": false,
+        "role": "any",
+        "runs": "go()"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "show_shift",
+        "description": "Open the Details dialog for a shift so the person can see it.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "shift_id": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "shift_id"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "x_jobex": {
+        "label": "Opening the shift",
+        "label_pl": "Otwieram zmianę",
+        "confirm": false,
+        "role": "any",
+        "runs": "details()"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "switch_role",
+        "description": "Switch the demo between the worker view and the employer view.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "type": "string",
+              "enum": [
+                "worker",
+                "employer"
+              ]
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "x_jobex": {
+        "label": "Switching view",
+        "label_pl": "Zmieniam widok",
+        "confirm": false,
+        "role": "any",
+        "runs": "setRole()"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "save_shift",
+        "description": "Save or unsave a shift (the bookmark). Reversible.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "shift_id": {
+              "type": "integer"
+            },
+            "saved": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "shift_id",
+            "saved"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "x_jobex": {
+        "label": "Saving the shift",
+        "label_pl": "Zapisuję zmianę",
+        "confirm": false,
+        "role": "worker",
+        "runs": "saveJob()"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "pass_shift",
+        "description": "Pass on a shift so it leaves Discover. Reversible with Undo pass.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "shift_id": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "shift_id"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "x_jobex": {
+        "label": "Passing on the shift",
+        "label_pl": "Pomijam zmianę",
+        "confirm": false,
+        "role": "worker",
+        "runs": "skip()"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "express_interest",
+        "description": "Send interest in a shift as the worker (same as I'm interested). The person must confirm. The company replies a few seconds later.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "shift_id": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "shift_id"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "x_jobex": {
+        "label": "Sending your interest",
+        "label_pl": "Wysyłam Twoje zainteresowanie",
+        "confirm": true,
+        "role": "worker",
+        "runs": "apply()"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "update_preferences",
+        "description": "Change worker preferences. Send only the fields to change. The person must confirm.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "available": {
+              "type": "boolean"
+            },
+            "skills": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The full new skill list."
+            },
+            "days": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "YYYY-MM-DD dates the worker is free."
+            },
+            "start": {
+              "type": "string",
+              "description": "HH:MM, earliest start."
+            },
+            "end": {
+              "type": "string",
+              "description": "HH:MM, latest end; must be after start."
+            },
+            "min_rate": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Minimum gross zł per hour."
+            },
+            "max_commute": {
+              "type": "number",
+              "minimum": 5,
+              "maximum": 120,
+              "description": "Minutes."
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "x_jobex": {
+        "label": "Updating your preferences",
+        "label_pl": "Aktualizuję preferencje",
+        "confirm": true,
+        "role": "worker",
+        "runs": "same validation as saveProfile()"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "send_chat_message",
+        "description": "Send a chat message in a matched connection, from the current role. Draft the text with the person first. The person must confirm.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "shift_id": {
+              "type": "integer"
+            },
+            "text": {
+              "type": "string",
+              "maxLength": 500
+            }
+          },
+          "required": [
+            "shift_id",
+            "text"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "x_jobex": {
+        "label": "Sending the message",
+        "label_pl": "Wysyłam wiadomość",
+        "confirm": true,
+        "role": "any",
+        "runs": "application().messages.push + persist()"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "set_payday_goal",
+        "description": "Set the Payday Lab earnings target (100-10000 zł gross) and hours budget (4-40). The person must confirm.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "target": {
+              "type": "integer",
+              "minimum": 100,
+              "maximum": 10000
+            },
+            "max_hours": {
+              "type": "integer",
+              "minimum": 4,
+              "maximum": 40
+            }
+          },
+          "required": [
+            "target",
+            "max_hours"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "x_jobex": {
+        "label": "Setting your Payday goal",
+        "label_pl": "Ustawiam cel Payday",
+        "confirm": true,
+        "role": "worker",
+        "runs": "same validation as savePlanSettings()"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "build_payday_plan",
+        "description": "Replace the Payday plan, either with the app's suggestion or with the given shift ids. Each id is checked with the plan rules; rejected ids come back with the reason. The person must confirm.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "suggest",
+                "these_shifts"
+              ]
+            },
+            "shift_ids": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          },
+          "required": [
+            "mode"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "x_jobex": {
+        "label": "Building your Payday plan",
+        "label_pl": "Układam plan Payday",
+        "confirm": true,
+        "role": "worker",
+        "runs": "buildPlan() or togglePlan() with planReason()"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "decide_candidate",
+        "description": "As the employer, accept or decline the worker's interest in one shift. Accept opens the chat. The person must confirm.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "shift_id": {
+              "type": "integer"
+            },
+            "decision": {
+              "type": "string",
+              "enum": [
+                "accept",
+                "decline"
+              ]
+            }
+          },
+          "required": [
+            "shift_id",
+            "decision"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "x_jobex": {
+        "label": "Recording your decision",
+        "label_pl": "Zapisuję decyzję",
+        "confirm": true,
+        "role": "employer",
+        "runs": "acceptWorker() or declineWorker()"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "draft_shift",
+        "description": "As the employer, turn a one-sentence brief into a shift draft in the AI shift studio, without publishing. Returns the extracted fields so you can point out anything to fix.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "brief": {
+              "type": "string",
+              "maxLength": 400
+            }
+          },
+          "required": [
+            "brief"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "x_jobex": {
+        "label": "Creating the shift form",
+        "label_pl": "Tworzę formularz zmiany",
+        "confirm": false,
+        "role": "employer",
+        "runs": "parseBrief() into state.draft, then go('studio')"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "publish_shift",
+        "description": "Publish the current studio draft to the demo, optionally with corrected fields. Times must be on one day with the end after the start. The person must confirm.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "company": {
+              "type": "string"
+            },
+            "area": {
+              "type": "string"
+            },
+            "rate": {
+              "type": "number"
+            },
+            "date": {
+              "type": "string"
+            },
+            "start": {
+              "type": "string"
+            },
+            "end": {
+              "type": "string"
+            },
+            "skills": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "category": {
+              "type": "string",
+              "enum": [
+                "Hospitality",
+                "Events",
+                "Retail"
+              ]
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "x_jobex": {
+        "label": "Publishing the shift",
+        "label_pl": "Publikuję zmianę",
+        "confirm": true,
+        "role": "employer",
+        "runs": "same validation as publishDraft()"
+      }
+    }
+  ],
+  "not_exposed": "Signing agreements, sending agreements, completing shifts, ratings, LARP points and titles, the dream goal and USD rate, the lore slider, the Backstage membership, interests and alerts, theme and every reset stay manual on purpose."
+}
