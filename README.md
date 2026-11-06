@@ -22,7 +22,7 @@ Then visit http://127.0.0.1:8000/Jobex-prototype.html. Browser storage is separa
 
 ## Current features
 
-- A dark theme with condensed display type, used across every screen.
+- Dark and light themes with a blue accent and condensed display type, used across every screen. Switch with the sun/moon button in the header; the choice is remembered in this browser (key `jobex-theme`) and Reset does not change it.
 - A four-step intro on first visit: welcome, confirm your details, confirm your availability, see how many shifts fit. The demo profile is prefilled, so each step only needs a confirm. **Skip intro** closes it.
 - On screens 1000 px and wider, Discover is a full-screen deck: one large shift card with the next two stacked behind. Drag the card, use the buttons, or press ← (pass), → (I'm interested) and ↑ (details). Search, sort, the lore slider and the availability switch are under **Refine**. Narrower screens keep the earlier Discover layout for now.
 - Notifications at the bottom right when a company accepts or declines your interest, with a button to open the chat or find similar shifts.
