@@ -65,7 +65,7 @@ Four layers, from strongest to weakest:
 1. **Server-side prompt.** `SYSTEM_PROMPT.md` defines the scope, the refusal sentence and the edge cases. The browser cannot replace it.
 2. **Scope gate.** Before the main call, for every new user message (not tool results), the proxy asks `deepseek-flash` without thinking, with `max_tokens` around 5, whether the message is about Jobex. If not, it returns the canned refusal ("I can only help with Jobex. Want me to find shifts that fit your week?", or the Polish version when the message is Polish) and skips the main call. This also saves money. If the gate call fails, the request continues to the main model, which still has the scope rules.
 3. **Tool boundary.** The model can only reach Jobex demo data through the 22 tools. It has no web access.
-4. **Evals.** `evals.jsonl` holds questions that must be refused (for example "Who is Jason?", "Was Trump elected in 2024?", "Write my Python homework", "What's the minimum wage in Poland?") and questions that must be answered ("What's good tomorrow morning?", "Why was I declined?", "Plan 600 zł this week"). Run them before every deploy and whenever the prompt changes.
+4. **Evals.** `evals.jsonl` holds questions that must be refused (for example troll questions like "Who is JSON?" or "What's a .json file?", "Was Trump elected in 2024?", "Write my Python homework", "What's the minimum wage in Poland?") and questions that must be answered ("What's good tomorrow morning?", "Why was I declined?", "Plan 600 zł this week"). Run them before every deploy and whenever the prompt changes.
 
 Prompt injection: shift descriptions, chat messages and drafts come back inside tool results. The prompt treats them as data. Actions that change data still need the visitor's confirmation in the page, so injected text can't send interest or messages on its own.
 
@@ -93,35 +93,42 @@ Each tool reuses the app's existing functions and validation (the `runs` field),
 ## The proxy
 
 - **Language:** Rust (tokio, axum, reqwest with rustls), like the relay, so the VM's existing Rust toolchain builds it. One binary, `jobex-assistant`, listening only on `127.0.0.1:8787`.
-- **Endpoint:** `POST /v1/chat` with `{messages, locale}`; replies as an SSE stream. `GET /healthz` for checks.
+- **Endpoints:** `POST /v1/chat` with `{messages, locale}`, which replies as an SSE stream; `GET /v1/status`, which says whether the assistant is open and when it reopens; `GET /healthz` for checks.
 - **Allowed callers:** CORS only for `https://nexicv.github.io` and, in development, `http://127.0.0.1:8000`.
 - **Limits** (all configurable):
   - 2,000 characters per user message, 40 messages per conversation, 6 tool rounds per question;
   - per IP 30 requests per 10 minutes and 200 per day;
   - `max_tokens` 1,500 per call and a 60-second timeout;
-  - a global daily token budget; once spent, the proxy returns "The assistant has reached today's limit".
-- **Model:** `deepseek-flash` with thinking on and `reasoning_effort: "high"`. No automatic switch to `deepseek-v4-pro`; changing it is a config edit by the owner.
-- **Keys:** `DEEPSEEK_API_KEY` and `SEAL_KEY` (32 random bytes for sealing reasoning) in `/etc/jobex-assistant/env`, owned by root with mode 600, loaded by systemd. They are never in the repo, the page, or logs. Changing `SEAL_KEY` only ends open conversations.
+  - a spending cap of **$1 per rolling hour**. The proxy works out the cost of each call from DeepSeek's reported token usage and a price table in its config. When the last 60 minutes reach $1, it answers "The assistant is busy right now. Try again in N minutes" with the real wait. Worst case is $24 a day; at the expected class usage it should be far less.
+- **Model:** `deepseek-flash` with thinking on and `reasoning_effort: "high"` (the owner's choice: strong answers without overthinking). No automatic switch to `deepseek-v4-pro` or a higher effort; changing either is a config edit by the owner.
+- **Secrets:** `DEEPSEEK_API_KEY`, `SEAL_KEY` (32 random bytes for sealing reasoning) and `TEAM_PASS_HASH` (see Quiet hours) in `/etc/jobex-assistant/env`, owned by root with mode 600, loaded by systemd. They are never in the repo, the page, or logs. Only the owner holds the API key and types it into that file. Changing `SEAL_KEY` only ends open conversations.
 - **Logs:** time, hashed IP, token counts, refused or not, tool names and errors. No message text by default.
 - **Prompt files:** the VM keeps a read-only clone of the public repo; the service reads `assistant/` from it at startup. Updating the prompt means a `git pull` and a restart.
+
+## Quiet hours and team access
+
+The shared DeepSeek rules say no DeepSeek use on weekdays (Monday to Friday, UTC) from 01:00 to 04:00 and from 06:00 to 10:00 UTC. In Warsaw that is 02:00–05:00 and 07:00–11:00 in winter (03:00–06:00 and 08:00–12:00 in summer), which overlaps the team's morning class.
+
+- **Closed for everyone else.** In those windows the proxy makes no DeepSeek call. `/v1/status` returns `open: false` and `reopens_at`, and the panel shows: "The assistant is resting. Try again at 11:00 your time (10:00 UTC), in 1 h 24 min", with the countdown kept live. The time comes from the proxy's clock, not the visitor's.
+- **Team access.** A small **Team access** link in the panel opens a password field. The passphrase goes to the proxy in an `X-Jobex-Team` header over HTTPS, and a correct one lets that visitor use the assistant during quiet hours. The page keeps it in `sessionStorage` until the tab closes.
+- **The passphrase** is chosen by the owner and shared only with the team. It should be long and hard to guess, for example five random words. The proxy stores only an Argon2id hash (`TEAM_PASS_HASH`), created on the VM with `jobex-assistant hash-pass`, which reads the passphrase without echoing it. It never appears in the repo, the page source or logs.
+- **Wrong guesses:** five wrong passphrases from one IP within an hour block team access for that IP for an hour.
+- Team access skips only the quiet hours. The $1-per-hour cap, the scope rules and the per-IP limits still apply.
 
 ## Hosting on the Milan VM
 
 The VM is the Oracle Always Free `gamenest-relay` (VM.Standard.E2.1.Micro, 1 OCPU, 1 GB RAM plus 1 GB swap, Ubuntu 24.04, public IP 80.225.80.132). The relay uses about 3 MB of RAM and 1% CPU, so there is room. Expected extra use: Caddy around 30–40 MB, the proxy under 20 MB.
 
-**HTTPS is required.** The site is served over HTTPS, and browsers block requests from it to a plain `http://` address. Caddy gets and renews a free certificate automatically, but it needs a hostname:
-
-- **DuckDNS** (recommended): a free name such as `jobex-ai.duckdns.org` that the owner controls, pointed at 80.225.80.132.
-- **sslip.io**: `80-225-80-132.sslip.io` needs no sign-up, but the name isn't the owner's.
+**HTTPS is required.** The site is served over HTTPS, and browsers block requests from it to a plain `http://` address. Caddy gets and renews a free certificate automatically, but it needs a hostname. The owner chose **DuckDNS**: a free name such as `jobex-ai.duckdns.org`, pointed at 80.225.80.132.
 
 Server changes, each one approved by the owner before it runs:
 
-1. Pick the hostname and point it at 80.225.80.132.
+1. The owner creates the DuckDNS name and points it at 80.225.80.132.
 2. Oracle Console: add ingress rules for TCP 80 and 443 to the security list that already allows 47631.
 3. On the VM: allow 80 and 443 in iptables before the REJECT rule and save with netfilter-persistent (the same way as 47631).
 4. Install Caddy from its official apt repository. Caddyfile: the hostname, `reverse_proxy 127.0.0.1:8787`, and response compression turned off for the stream.
 5. Create the system user `jobex-assistant`, build the proxy on the VM, and install it to `/usr/local/bin`.
-6. Generate `SEAL_KEY` on the VM (`openssl rand -hex 32`). The owner puts the DeepSeek API key into `/etc/jobex-assistant/env` themselves (or pastes it into an editor during the SSH session), so it never passes through chat logs.
+6. Generate `SEAL_KEY` on the VM (`openssl rand -hex 32`). The owner runs `jobex-assistant hash-pass` to set `TEAM_PASS_HASH`, and types the DeepSeek API key into `/etc/jobex-assistant/env` in an SSH session (for example with `sudo nano`), so neither the key nor the passphrase passes through a chat.
 7. Add a systemd unit (hardened like `gamenest-relay.service`, `MemoryMax=150M`), enable it, and check `GET /healthz` from the internet.
 8. Run the evals against the live proxy, then set the page's `ASSISTANT_URL` and test from the published site.
 
@@ -129,7 +136,7 @@ Rollback: stop and disable the service, remove the Caddy site and close 80 and 4
 
 ## Costs
 
-DeepSeek API usage is paid from the owner's DeepSeek balance, separately from the Claude subscription. Prices aren't on the public overview page; check the pricing page and set the daily token budget before launch. The scope gate's refusals cost a few tokens each, and refused questions never reach the main call.
+DeepSeek API usage is paid from the owner's DeepSeek balance, separately from the Claude subscription. The proxy caps spending at $1 per rolling hour. Prices aren't on the public API overview page, so the price table in the proxy config must be filled from DeepSeek's pricing page before launch. The scope gate's refusals cost a few tokens each, and refused questions never reach the main call.
 
 ## Build order
 
@@ -139,10 +146,16 @@ DeepSeek API usage is paid from the owner's DeepSeek balance, separately from th
 4. Server steps 1–8 above.
 5. README section and a short note in `KNOWLEDGE.md` about the assistant itself.
 
-## Decisions for the owner
+## Decided by the owner (6 November 2026)
 
-- Hostname: DuckDNS name (and which) or sslip.io.
-- Daily budget in tokens or złoty, and the per-IP limits above.
-- Thinking effort: `high` (better answers, slower and costlier) or a lighter setting. The visitor sees only step labels either way.
-- Whether the weekday UTC windows in the shared DeepSeek rules (no DeepSeek use 01:00–04:00 and 06:00–10:00) also apply to visitors using the assistant. They were written for agent delegation; if they apply, the assistant shows "back at 10:00 UTC" during those windows.
-- Who else may hold the API key or deploy (for example the teammate).
+- Hostname: DuckDNS.
+- Spending cap: $1 per hour.
+- Thinking effort: `high`.
+- Quiet hours apply, with a countdown to reopening and a team passphrase that works at any time.
+- Only the owner holds the DeepSeek API key and enters it on the server. The teammate doesn't get it.
+
+## Still open
+
+- The DuckDNS subdomain name.
+- The team passphrase (owner chooses it; it is never written in the repo or a chat).
+- Whether the per-IP limits above are right for a class demo, where many students may share one school IP. If so, raise them or rely on the $1 cap.
