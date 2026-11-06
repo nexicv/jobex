@@ -315,7 +315,7 @@ async function handleChat(req, res) {
 
   const answer = locale === 'pl'
     ? 'To jest fałszywy serwer testowy. Umie szukać zmian, wysyłać zainteresowanie i czytać Twój plan. Napisz "find", żeby sprawdzić wyszukiwanie.'
-    : 'This is the fake test proxy. I can search shifts, send interest and read your plan. Ask me to find shifts to try the tools.';
+    : 'This is the **fake** test proxy. I can search shifts, send interest and read your plan. Ask me to find shifts to try the tools.';
   startStream(res);
   send(res, 'status', { label: locale === 'pl' ? 'Zastanawiam się, czego potrzebujesz' : 'Working out what you need' });
   await sleep(40);

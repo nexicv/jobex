@@ -459,7 +459,7 @@ body.ob-open .assistant-fab{display:none}
 .assistant-msg{display:flex;flex-direction:column;gap:6px}
 .assistant-msg-user{align-items:flex-end}
 .assistant-bubble{max-width:88%;padding:9px 12px;border-radius:12px 12px 4px 12px;background:var(--tint);border:1px solid var(--tint-line);color:var(--ink);font-size:12px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
-.assistant-text{font-size:12px;line-height:1.6;color:var(--ink);white-space:pre-wrap;overflow-wrap:anywhere}
+.assistant-text{font-size:12px;line-height:1.6;color:var(--ink);white-space:pre-wrap;overflow-wrap:anywhere}.assistant-text strong{font-weight:700}
 .assistant-notice{margin:0;font-size:11px;line-height:1.5;color:var(--muted)}
 .assistant-notice.is-error{color:var(--danger-text)}
 .assistant-steps{display:flex;flex-direction:column;gap:5px}
@@ -653,7 +653,18 @@ body.ob-open .assistant-fab{display:none}
   }
 
   function scrollToEnd() { if (refs.log) refs.log.scrollTop = refs.log.scrollHeight; }
-  function setLive(t) { if (refs.live && t) refs.live.textContent = t; }
+  function setLive(t) { if (refs.live && t) refs.live.textContent = String(t).replace(/\*\*/g, ''); }
+  // Renders **bold** as <strong> using text nodes only; nothing from the model is parsed as HTML.
+  // Added by (Claude Opus 5.5 Medium), 2026-11-06T21:40+01:00 (Europe/Warsaw).
+  function paintRich(target, text) {
+    target.textContent = '';
+    var parts = String(text || '').split(/\*\*([^*\n]+?)\*\*/);
+    for (var i = 0; i < parts.length; i++) {
+      if (!parts[i]) continue;
+      if (i % 2) { var b = document.createElement('strong'); b.textContent = parts[i]; target.appendChild(b); }
+      else target.appendChild(document.createTextNode(parts[i]));
+    }
+  }
 
   function buildUi() {
     var fab = el('button', 'assistant-fab', { type: 'button', id: 'assistantFab', 'aria-haspopup': 'dialog', 'aria-expanded': 'false', 'aria-controls': 'assistantPanel' });
@@ -800,7 +811,7 @@ body.ob-open .assistant-fab{display:none}
     stepsWrap.appendChild(summary);
     stepsWrap.appendChild(list);
     var textEl = el('div', 'assistant-text');
-    textEl.textContent = item.text || '';
+    paintRich(textEl, item.text || '');
     wrap.appendChild(stepsWrap);
     wrap.appendChild(textEl);
     summary.addEventListener('click', function () {
@@ -865,7 +876,7 @@ body.ob-open .assistant-fab{display:none}
     if (!cur || !cur.item || !text) return;
     cur.item.text += text;
     var r = nodes.get(cur.item);
-    if (r) r.textEl.textContent = cur.item.text;
+    if (r) paintRich(r.textEl, cur.item.text);
     scrollToEnd();
   }
 
