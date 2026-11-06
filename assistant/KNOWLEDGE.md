@@ -1,10 +1,10 @@
-# Jobex knowledge base for the assistant
+# LARPd knowledge base for the assistant
 
-Written by Claude Opus 5.5, 6 November 2026, from the code in `Jobex-prototype.html` on branch `feature/onboarding-deck`. The proxy sends this file to the model with every request. Keep it factual and update it whenever the app changes. When this file and the live data from a tool disagree, the tool result wins.
+Written by Claude Opus 5.5, 6 November 2026, from the code in `Jobex-prototype.html` on branch `feature/onboarding-deck`. Updated by (Claude Opus 5.5 Medium), 2026-11-06T20:30+01:00 (Europe/Warsaw), for the LARPd branding, Backstage and rating-based LARP points on `main` (commit 51edd04). The proxy sends this file to the model with every request. Keep it factual and update it whenever the app changes. When this file and the live data from a tool disagree, the tool result wins.
 
-## What Jobex is
+## What LARPd is
 
-Jobex is a university prototype for short-term work. People who want a few hours of work find single shifts that fit their skills, days and commute. Businesses post shifts and pick workers. It is a demo: every company, shift, profile, badge, commute time and agreement is fictional. There are no real jobs, payments, identity checks or legal contracts.
+LARPd (formerly called Jobex) is a university prototype for short-term work. People who want a few hours of work find single shifts that fit their skills, days and commute. Businesses post shifts and pick workers. It is a demo: every company, shift, profile, badge, commute time and agreement is fictional. There are no real jobs, payments, subscriptions, identity checks or legal contracts. The project folder, file name and storage key still say "Jobex"; the app itself is called LARPd.
 
 The whole app is one web page. Each visitor's data lives only in their own browser (`localStorage`, key `jobex-v1`). Nothing is shared between visitors, and there is no account or server database. The assistant is the only part that talks to a server.
 
@@ -22,7 +22,8 @@ The header switch has two roles. Both are played by the same person in the same 
 - **My shifts**: shifts you signed for and completed.
 - **Payday Lab**: plan a week of shifts against an earnings target.
 - **My profile**: name, skills, availability, minimum rate and longest commute, plus an Achievements tab with earned titles.
-- **LARP**: the playful "LARP club" with points, unlocks, a dream goal and shareable story cards.
+- **LARP**: the playful "LARPd After Hours / LARP club" with points, unlocks, a dream goal, the lore studio and shareable story cards.
+- **Backstage**: an optional demo membership that curates interesting shifts around your taste (see below).
 
 ## Employer pages
 
@@ -39,7 +40,7 @@ The header switch has two roles. Both are played by the same person in the same 
 | `matched` | It's a match | Worker and company can chat. The employer can send the demo agreement. |
 | `contract` | Contract ready | The worker reviews the agreement and simulates signing. |
 | `signed` | Shift confirmed | After the shift, either side can mark it completed. |
-| `completed` | Shift completed | Both sides leave a 1–5 rating. The worker earns 100 LARP points. |
+| `completed` | Shift completed | Both sides leave a 1–5 star rating. The worker's LARP points come from the employer's rating (see LARP club). |
 | `declined` | Not this time | The company chose someone else. Similar shifts stay in Discover. |
 
 If the worker stays in the worker view after showing interest, the company answers by itself after about 5–8 seconds: it accepts when the worker has at least one of the shift's required skills and declines otherwise. If the user switches to **I'm hiring** first, they decide as the employer instead. A notification appears at the bottom right when a company accepts or declines.
@@ -65,11 +66,23 @@ Set an earnings target (100–10,000 zł) and an hours budget (4–40 hours). Ad
 
 ## LARP club
 
-- Points: +100 for each completed shift. Points are not money and give no discounts.
-- Unlocks: some demo shifts are locked until 200, 500 or 1,000 points (for example "Gallery opening host").
-- Dream goal: Rolex Daytona (150,000 zł demo target) or Porsche 911 (650,000 zł demo target). Shift cards show how many hours at that rate the goal would take. These are illustrative budgets, not real prices.
+- Points come from the **employer's rating** of a completed shift: 1 star = 10, 2 = 20, 3 = 50, 4 = 100, 5 = 150 LARP points. Until the employer rates, the worker's points for that shift are pending. Changing the rating replaces the earlier award. The worker's own rating rates the employer and gives no points. To try it alone, complete a signed shift, switch to **I'm hiring** and rate the worker.
+- Points are not money and give no discounts. The **Demo admin** panel on the LARP page can set any balance from 0 to 100,000 or **Unlock all tiers** (1,000 points), for testing.
+- Unlocks: three fictional shifts are locked until 200, 500 or 1,000 points: "Gallery opening host" (AFTER HOURS Gallery, 200), "Supercar launch concierge" (MIDNIGHT Motors, 500) and "Rooftop listening-party host" (SKYLINE Sessions, 1,000). Unlocking gives access only; the shift must still fit the worker's availability and preferences.
+- Dream goal ("Choose your LARP dream"): pick something to work toward from two groups. **Experiences**, for example an espresso and Moleskine café moment ($6), a coworking day pass ($25), a tuxedo rental ($150), a 911 weekend rental ($1,000), a supercar rental ($2,000–5,000) or a private jet charter photo opportunity ($10,000). **Objects**, for example a Moleskine notebook ($20), an Arc'teryx shell ($700), a Leica M6 ($3,000–5,000), a Rolex Submariner ($10,000+), a Porsche 911 ($120,000+) or the original Rolex Daytona (150,000 zł). Each goal has a joke persona ("You're LARPing as…"). Every Discover card and shift detail shows how many shifts and hours at that rate the goal would take. US dollar goals are converted at a demo rate (default $1 = 4 zł, editable under "Price assumptions & currency"); it is not a live exchange rate. All prices are illustrative budgets, not real quotes.
 - Lore slider ("Reality ↔ delusion"): changes how shift titles and captions are phrased. Below 34 is "Reality check" (plain titles), 34–66 "A little spin", 67 and above "Full main character". The real role is always shown too.
-- Titles: completing certain kinds of shifts earns joke profile titles, for example "Junior Vice President of Espresso" for a barista shift. One title can be shown on the profile.
+- Titles: completing certain kinds of shifts earns joke profile titles: "Junior Vice President of Espresso" (barista or coffee), "Director of Guest List Operations" (host or concierge), "Chief Officer of Moving Things Around" (crew, retail or warehouse) and "Associate Curator of Immaculate Vibes" (gallery). One title can be shown on the profile; the default is "Main Character in Training".
+- Lore timeline and story cards: each completed shift becomes a chapter with its points, and can be previewed as an Instagram-style story card. Nothing is posted.
+
+## Backstage
+
+Backstage is an optional **demo** membership on its own worker page. Its concept price is 29 zł per month, but nothing is charged: **Simulate Backstage membership** only switches a flag in this browser, and **End demo membership** switches it back.
+
+- All jobs stay free to apply to, and membership never changes eligibility, matching or who the employer picks. Backstage only changes discovery.
+- Interests: **Film & music** and **Fashion & design** (both on by default). Members see the Backstage shifts in the interests they picked ("Picked for you"); without membership the page shows the whole collection as a preview.
+- Demo drop alerts (on by default) count how many picked shifts fit the worker's current profile. They are in-app previews; nothing is sent.
+- Backstage shifts include, for example, Film-set runner (FRAME Studio), Fashion showroom assistant (OFFLINE Showroom), Listening-bar host (SIDE A) and Design fair welcome crew (OBJECT Fair), plus "Everyday shifts" such as hotel breakfast, parcel sorting and shelf restocking. They also appear in Discover like any other shift when they fit.
+- **Build my shift plan** opens Payday Lab.
 
 ## Intro, themes and reset
 
@@ -79,7 +92,7 @@ Set an earnings target (100–10,000 zł) and an hours budget (4–40 hours). Ad
 
 ## What the demo does not do
 
-- No real employers, jobs, payments, payroll, taxes, insurance, identity verification or legal contracts.
+- No real employers, jobs, payments, subscriptions, payroll, taxes, insurance, identity verification or legal contracts.
 - No messages leave the browser; chat is simulated by switching roles.
 - No accounts, no shared data between visitors, no mobile app.
 - The AI shift studio is rule-based. The assistant (this chat) is the only real AI feature.

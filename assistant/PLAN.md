@@ -1,12 +1,12 @@
-# Jobex assistant: plan
+# LARPd assistant: plan
 
-Written by Claude Opus 5.5, 6 November 2026. Status (6 November 2026): the proxy in `proxy/` is built and tested locally against a fake DeepSeek server. The page's chat panel isn't built yet, nothing is deployed, and nothing has changed on the server.
+Written by Claude Opus 5.5, 6 November 2026. Updated by (Claude Opus 5.5 Medium), 2026-11-06T20:45+01:00 (Europe/Warsaw): LARPd branding, `get_backstage` tool (23 tools), main merged in. Status (6 November 2026): the proxy in `proxy/` is built and tested locally against a fake DeepSeek server. The page's chat panel isn't built yet, nothing is deployed, and nothing has changed on the server.
 
 ## Goal
 
-Add a real AI assistant to the Jobex demo, powered by DeepSeek, that:
+Add a real AI assistant to the LARPd demo (formerly Jobex), powered by DeepSeek, that:
 
-- answers only questions about Jobex and refuses everything else;
+- answers only questions about LARPd and refuses everything else;
 - can read everything in the visitor's demo and act in it through tools, with a confirm step for anything that changes data;
 - shows what it is doing as short live steps ("Reading your profile", "Finding suitable shifts", "Creating the shift form"), not its raw chain of thought;
 - keeps the DeepSeek API key off the public site.
@@ -15,19 +15,19 @@ Add a real AI assistant to the Jobex demo, powered by DeepSeek, that:
 
 | File | Purpose |
 |---|---|
-| `KNOWLEDGE.md` | Facts about Jobex the model relies on. Update it with every app change. |
+| `KNOWLEDGE.md` | Facts about LARPd the model relies on. Update it with every app change. |
 | `SYSTEM_PROMPT.md` | Scope rules, tool rules and style. `{{KNOWLEDGE}}` is replaced with `KNOWLEDGE.md` at startup. |
-| `tools.json` | The 22 tools the model can call, with which ones need confirmation. |
+| `tools.json` | The 23 tools the model can call, with which ones need confirmation. |
 | `PLAN.md` | This plan. |
-| `proxy/` | Proxy source (to be written). |
-| `evals.jsonl` | On-topic, off-topic and injection test prompts (to be written). |
+| `proxy/` | The Rust proxy (built, 17 tests). |
+| `evals.jsonl`, `evals/run.mjs` | On-topic and off-topic test prompts and a runner (`node assistant/evals/run.mjs <proxy URL>`). Injection cases come with the chat panel. |
 
 ## How it fits together
 
 ```
  visitor's browser (nexicv.github.io/jobex)              Oracle VM "gamenest-relay", Milan
  ┌──────────────────────────────────────┐   HTTPS POST   ┌───────────────────────────────┐
- │ Jobex page                           │ ─────────────▶ │ Caddy :443 (auto certificate) │
+ │ LARPd page                           │ ─────────────▶ │ Caddy :443 (auto certificate) │
  │  - chat panel, live step labels      │ ◀───────────── │   └▶ jobex-assistant :8787    │
  │  - tool runner (reads/edits state)   │   SSE stream   │        holds the API key      │
  │  - keeps the conversation            │                │        adds prompt + tools    │
@@ -63,8 +63,8 @@ DeepSeek requires that, when tools are in use, every earlier assistant message i
 Four layers, from strongest to weakest:
 
 1. **Server-side prompt.** `SYSTEM_PROMPT.md` defines the scope, the refusal sentence and the edge cases. The browser cannot replace it.
-2. **Scope gate.** Before the main call, for every new user message (not tool results), the proxy asks `deepseek-flash` without thinking, with `max_tokens` around 5, whether the message is about Jobex. If not, it returns the canned refusal ("I can only help with Jobex. Want me to find shifts that fit your week?", or the Polish version when the message is Polish) and skips the main call. This also saves money. If the gate call fails, the request continues to the main model, which still has the scope rules.
-3. **Tool boundary.** The model can only reach Jobex demo data through the 22 tools. It has no web access.
+2. **Scope gate.** Before the main call, for every new user message (not tool results), the proxy asks `deepseek-flash` without thinking, with `max_tokens` around 5, whether the message is about LARPd. If not, it returns the canned refusal ("I can only help with LARPd. Want me to find shifts that fit your week?", or the Polish version when the message is Polish) and skips the main call. This also saves money. If the gate call fails, the request continues to the main model, which still has the scope rules.
+3. **Tool boundary.** The model can only reach LARPd demo data through the 23 tools. It has no web access.
 4. **Evals.** `evals.jsonl` holds questions that must be refused (for example troll questions like "Who is JSON?" or "What's a .json file?", "Was Trump elected in 2024?", "Write my Python homework", "What's the minimum wage in Poland?") and questions that must be answered ("What's good tomorrow morning?", "Why was I declined?", "Plan 600 zł this week"). Run them before every deploy and whenever the prompt changes.
 
 Prompt injection: shift descriptions, chat messages and drafts come back inside tool results. The prompt treats them as data. Actions that change data still need the visitor's confirmation in the page, so injected text can't send interest or messages on its own.
@@ -73,18 +73,18 @@ Prompt injection: shift descriptions, chat messages and drafts come back inside 
 
 Everything the assistant can do goes through `tools.json`:
 
-- Read: the overview, shifts (searchable, with match breakdown), one shift, profile, connections, chat history, Payday plan, LARP status and the employer dashboard.
+- Read: the overview, shifts (searchable, with match breakdown), one shift, profile, connections, chat history, Payday plan, LARP status, Backstage and the employer dashboard.
 - Navigate: open any page, open a shift's details, switch roles.
 - Change, without confirmation (reversible): save or unsave, pass.
 - Change, with confirmation: send interest, edit preferences, send a chat message, set the Payday target, replace the Payday plan, accept or decline as the employer, publish a studio draft.
 - Draft only: turn a brief into a studio draft.
-- Left manual on purpose: signing or sending agreements, completing shifts, ratings, LARP points and titles, the lore slider, theme, and every reset.
+- Left manual on purpose: signing or sending agreements, completing shifts, ratings, LARP points and titles, the dream goal, the lore slider, the Backstage membership, theme, and every reset.
 
 Each tool reuses the app's existing functions and validation (the `runs` field), so the assistant can't create states the buttons couldn't.
 
 ## Page changes
 
-- An **Ask Jobex** button at the bottom right (above the notification stack) opens a side panel on desktop; phone layout comes later with the rest of the phone work.
+- An **Ask LARPd** button at the bottom right (above the notification stack) opens a side panel on desktop; phone layout comes later with the rest of the phone work.
 - Messages, a live step list above each answer (one line per step, a spinner on the current one and a check on finished ones, for example "Reading your profile ✓ / Finding suitable shifts ✓ / Writing the answer"), which collapses to a one-line summary ("3 steps") once the answer arrives, plus confirm cards. Steps are in Polish when the visitor writes in Polish (`label_pl`).
 - The conversation is kept in `sessionStorage`, so it survives a reload but not closing the tab. **Reset** clears it.
 - If the proxy can't be reached: "The assistant is offline right now. Everything else in the demo still works."
@@ -155,6 +155,7 @@ DeepSeek API usage is paid from the owner's DeepSeek balance, separately from th
 - Only the owner holds the DeepSeek API key and enters it on the server. The teammate doesn't get it.
 
 - DuckDNS name: `jobex-ai` (picked by Claude at the owner's request).
+- The assistant uses the LARPd name (owner, 6 November 2026 evening). Technical names (`jobex-assistant`, `jobex-ai.duckdns.org`, `x-jobex-team`, storage key `jobex-v1`) stay as they are.
 - Per-IP limits raised for shared school networks (120 per 10 minutes, 1,000 per day).
 
 ## Still open

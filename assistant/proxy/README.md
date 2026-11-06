@@ -1,6 +1,6 @@
 # jobex-assistant
 
-Created by Claude Opus 5.5, 6 November 2026. The proxy between the Jobex page and the DeepSeek API, described in [../PLAN.md](../PLAN.md). It holds the API key, adds the Jobex system prompt, knowledge base and tools, refuses off-topic questions, keeps quiet hours (with a team passphrase that works at any time), and caps spending at $1 per rolling hour.
+Created by Claude Opus 5.5, 6 November 2026. The proxy between the LARPd page (formerly Jobex) and the DeepSeek API, described in [../PLAN.md](../PLAN.md). It holds the API key, adds the LARPd system prompt, knowledge base and tools, refuses off-topic questions, keeps quiet hours (with a team passphrase that works at any time), and caps spending at $1 per rolling hour.
 
 ## Build and test
 
@@ -38,7 +38,7 @@ Copy `config.example.toml` to `config.toml` and fill `[prices]` from DeepSeek's 
 | `content` | `{text}` | Appends answer text. |
 | `tool_calls` | `{calls: [{id, name, arguments, label}], message}` | Stores `message`, runs each call (with a confirm card where `tools.json` says so), then posts again with one `{role: "tool", tool_call_id, content}` per call. |
 | `done` | `{message}` | Stores `message`; the turn is over. |
-| `refused` | `{text, message}` | Shows the one-line Jobex-only reply. |
+| `refused` | `{text, message}` | Shows the one-line LARPd-only reply. |
 | `closed` | `{text, reopens_at, team_rejected}` | Quiet hours: shows a live countdown to `reopens_at` in the visitor's time. |
 | `busy` | `{text, retry_after_s}` | Spending cap or per-IP limit reached. |
 | `error` | `{text}` | Shows the text; the rest of the demo keeps working. |

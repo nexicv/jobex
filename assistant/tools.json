@@ -5,7 +5,7 @@
       "type": "function",
       "function": {
         "name": "get_app_overview",
-        "description": "Current role and page, the worker's profile summary, how many shifts fit, connection counts by status, saved shifts, LARP points and whether the intro was finished. Call this first when you need context.",
+        "description": "Current role and page, the worker's profile summary, how many shifts fit, connection counts by status, saved shifts, LARP points, whether the Backstage demo membership is on, and whether the intro was finished. Call this first when you need context.",
         "parameters": {
           "type": "object",
           "properties": {},
@@ -217,7 +217,7 @@
       "type": "function",
       "function": {
         "name": "get_larp_status",
-        "description": "LARP club: points, next unlock, locked shifts and their thresholds, dream goal, lore slider level and earned titles.",
+        "description": "LARP club: points (awarded from the employer's 1-5 star rating of each completed shift: 10/20/50/100/150), points still pending a rating, next unlock, locked shifts and their thresholds, the chosen dream goal with its persona and cost, the demo USD-to-zł rate, lore slider level and earned titles.",
         "parameters": {
           "type": "object",
           "properties": {},
@@ -229,7 +229,26 @@
         "label_pl": "Sprawdzam postępy LARP",
         "confirm": false,
         "role": "any",
-        "runs": "state.larp, loreLevel(), earnedTitles()"
+        "runs": "state.larp, ratingRewards, loreLevel(), earnedTitles(), larpGoals"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_backstage",
+        "description": "Backstage demo membership: whether it is on, the chosen interests (Film & music, Fashion & design), whether demo drop alerts are on, and the Backstage shifts with their collection, pay, time and whether each fits the worker now. Membership never changes eligibility.",
+        "parameters": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false
+        }
+      },
+      "x_jobex": {
+        "label": "Checking Backstage",
+        "label_pl": "Sprawdzam Backstage",
+        "confirm": false,
+        "role": "worker",
+        "runs": "state.backstage, state.jobs (collection), fit()"
       }
     },
     {
@@ -255,7 +274,7 @@
       "type": "function",
       "function": {
         "name": "open_page",
-        "description": "Show a page of the app. Worker pages: discover, matches (Connections), shifts (My shifts), payday, profile, larp. Employer pages: overview, studio, candidates, analytics.",
+        "description": "Show a page of the app. Worker pages: discover, matches (Connections), shifts (My shifts), payday, profile, larp, backstage. Employer pages: overview, studio, candidates, analytics.",
         "parameters": {
           "type": "object",
           "properties": {
@@ -268,6 +287,7 @@
                 "payday",
                 "profile",
                 "larp",
+                "backstage",
                 "overview",
                 "studio",
                 "candidates",
@@ -701,5 +721,5 @@
       }
     }
   ],
-  "not_exposed": "Signing agreements, sending agreements, completing shifts, ratings, LARP points and titles, the lore slider, theme and every reset stay manual on purpose."
+  "not_exposed": "Signing agreements, sending agreements, completing shifts, ratings, LARP points and titles, the dream goal and USD rate, the lore slider, the Backstage membership, interests and alerts, theme and every reset stay manual on purpose."
 }

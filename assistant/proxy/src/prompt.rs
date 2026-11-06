@@ -74,10 +74,10 @@ mod tests {
         let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("..");
         let a = Assets::load(&dir).unwrap();
         assert!(a.system_prompt.contains("# Knowledge base"));
-        assert!(a.system_prompt.contains("What Jobex is"));
+        assert!(a.system_prompt.contains("What LARPd is"));
         assert!(!a.system_prompt.contains("{{KNOWLEDGE}}"));
         let tools = a.tools.as_array().unwrap();
-        assert_eq!(tools.len(), 22);
+        assert_eq!(tools.len(), 23);
         assert!(tools.iter().all(|t| t.get("x_jobex").is_none()));
         assert_eq!(a.label("search_shifts", false), "Finding suitable shifts");
         assert_eq!(a.label("draft_shift", true), "Tworzę formularz zmiany");
