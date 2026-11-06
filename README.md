@@ -1,6 +1,6 @@
-# Jobex
+# LARPd
 
-A university prototype for short-term work matching. The existing demo is preserved in `Jobex-prototype.html`, with HTML, CSS, JavaScript, and SVG illustrations in one file.
+A university prototype for short-term work matching, now branded as LARPd. The existing demo is preserved in `Jobex-prototype.html`, with HTML, CSS, JavaScript, and SVG illustrations in one file.
 
 ## Run
 
