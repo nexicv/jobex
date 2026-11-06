@@ -1,6 +1,6 @@
 # Jobex assistant: plan
 
-Written by Claude Opus 5.5, 6 November 2026. Status: plan only. Nothing is built or deployed, and nothing has changed on the server.
+Written by Claude Opus 5.5, 6 November 2026. Status (6 November 2026): the proxy in `proxy/` is built and tested locally against a fake DeepSeek server. The page's chat panel isn't built yet, nothing is deployed, and nothing has changed on the server.
 
 ## Goal
 
@@ -97,7 +97,7 @@ Each tool reuses the app's existing functions and validation (the `runs` field),
 - **Allowed callers:** CORS only for `https://nexicv.github.io` and, in development, `http://127.0.0.1:8000`.
 - **Limits** (all configurable):
   - 2,000 characters per user message, 40 messages per conversation, 6 tool rounds per question;
-  - per IP 30 requests per 10 minutes and 200 per day;
+  - per IP 120 requests per 10 minutes and 1,000 per day, generous because a whole class may share one school IP; the dollar cap is the real brake;
   - `max_tokens` 1,500 per call and a 60-second timeout;
   - a spending cap of **$1 per rolling hour**. The proxy works out the cost of each call from DeepSeek's reported token usage and a price table in its config. When the last 60 minutes reach $1, it answers "The assistant is busy right now. Try again in N minutes" with the real wait. Worst case is $24 a day; at the expected class usage it should be far less.
 - **Model:** `deepseek-flash` with thinking on and `reasoning_effort: "high"` (the owner's choice: strong answers without overthinking). No automatic switch to `deepseek-v4-pro` or a higher effort; changing either is a config edit by the owner.
@@ -119,7 +119,7 @@ The shared DeepSeek rules say no DeepSeek use on weekdays (Monday to Friday, UTC
 
 The VM is the Oracle Always Free `gamenest-relay` (VM.Standard.E2.1.Micro, 1 OCPU, 1 GB RAM plus 1 GB swap, Ubuntu 24.04, public IP 80.225.80.132). The relay uses about 3 MB of RAM and 1% CPU, so there is room. Expected extra use: Caddy around 30–40 MB, the proxy under 20 MB.
 
-**HTTPS is required.** The site is served over HTTPS, and browsers block requests from it to a plain `http://` address. Caddy gets and renews a free certificate automatically, but it needs a hostname. The owner chose **DuckDNS**: a free name such as `jobex-ai.duckdns.org`, pointed at 80.225.80.132.
+**HTTPS is required.** The site is served over HTTPS, and browsers block requests from it to a plain `http://` address. Caddy gets and renews a free certificate automatically, but it needs a hostname. The owner chose **DuckDNS**, and the name is `jobex-ai.duckdns.org`, pointed at 80.225.80.132.
 
 Server changes, each one approved by the owner before it runs:
 
@@ -154,8 +154,10 @@ DeepSeek API usage is paid from the owner's DeepSeek balance, separately from th
 - Quiet hours apply, with a countdown to reopening and a team passphrase that works at any time.
 - Only the owner holds the DeepSeek API key and enters it on the server. The teammate doesn't get it.
 
+- DuckDNS name: `jobex-ai` (picked by Claude at the owner's request).
+- Per-IP limits raised for shared school networks (120 per 10 minutes, 1,000 per day).
+
 ## Still open
 
-- The DuckDNS subdomain name.
-- The team passphrase (owner chooses it; it is never written in the repo or a chat).
-- Whether the per-IP limits above are right for a class demo, where many students may share one school IP. If so, raise them or rely on the $1 cap.
+- The team passphrase: the owner creates it during server step 6 with `jobex-assistant hash-pass`, and it is never written in the repo or a chat.
+- Prices for `[prices]` in the server's `config.toml`, from DeepSeek's pricing page.
