@@ -259,6 +259,8 @@ main:has(.deck){max-width:none;padding:22px 40px 20px}
 <style id="phone">
 /* Phone overrides only: keep desktop and the assistant integration independent. */
 @media (max-width:720px){
+ /* Draw the decoration: iOS renders the Unicode asterisk as an opaque emoji. */
+ .larp-hero::after{content:"";width:180px;height:180px;top:16px;right:-30px;font-size:0;background:#d8fa83;opacity:.08;clip-path:polygon(42% 0,58% 0,58% 30%,79% 9%,91% 21%,70% 42%,100% 42%,100% 58%,70% 58%,91% 79%,79% 91%,58% 70%,58% 100%,42% 100%,42% 70%,21% 91%,9% 79%,30% 58%,0 58%,0 42%,30% 42%,9% 21%,21% 9%,42% 30%);pointer-events:none}
  header{height:auto;min-height:112px;padding:10px 16px;display:grid;grid-template-columns:1fr auto;gap:8px}
  header .mobile-brand{grid-column:1;grid-row:1;justify-self:start}
  header .top-actions{display:contents}
