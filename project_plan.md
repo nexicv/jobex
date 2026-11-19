@@ -84,6 +84,8 @@ For T02, Doğukan prepares the draft flow and test cases. Emir runs the tests th
 
 ## 5. Project timeline
 
+![Four-week LARPd Gantt chart with tasks, owners, and milestones](assets/larpd-gantt.png)
+
 The four weeks are a proposed schedule from kickoff. Add calendar dates once we know the class deadline and team availability.
 
 | Week | Technical work | Design and outreach | Checkpoint |
