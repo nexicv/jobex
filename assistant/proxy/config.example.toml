@@ -1,0 +1,41 @@
+# Jobex assistant proxy settings. Copy to config.toml next to the binary (or pass its path to `serve`).
+# Secrets are NOT here: DEEPSEEK_API_KEY, SEAL_KEY and TEAM_PASS_HASH come from the environment.
+
+listen = "127.0.0.1:8787"
+allowed_origins = ["https://nexicv.github.io", "http://127.0.0.1:8000", "http://localhost:8000"]
+# Folder with SYSTEM_PROMPT.md, KNOWLEDGE.md and tools.json (the repo's assistant/ folder).
+assistant_dir = "/srv/jobex/assistant"
+# Behind Caddy the client address is the last X-Forwarded-For entry.
+trust_forwarded_for = true
+
+[deepseek]
+base_url = "https://api.deepseek.com"
+model = "deepseek-flash"
+reasoning_effort = "high"
+gate_model = "deepseek-flash"
+scope_gate = true
+max_tokens = 4000
+timeout_secs = 90
+
+[limits]
+max_user_chars = 2000
+max_tool_result_chars = 12000
+max_messages = 40
+max_tool_rounds = 6
+# Generous because a whole class may share one school IP; the dollar cap is the real brake.
+per_ip_10min = 120
+per_ip_day = 1000
+usd_per_hour = 1.0
+team_fail_limit = 5
+
+# US dollars per million tokens. Fill these from https://api-docs.deepseek.com/quick_start/pricing
+# before launch; the proxy refuses to start while any is 0.
+[prices]
+input_cache_hit_per_m = 0.0
+input_cache_miss_per_m = 0.0
+output_per_m = 0.0
+
+[quiet_hours]
+enabled = true
+# Monday to Friday, UTC. No DeepSeek calls in these windows unless the team passphrase is given.
+weekday_windows_utc = ["01:00-04:00", "06:00-10:00"]

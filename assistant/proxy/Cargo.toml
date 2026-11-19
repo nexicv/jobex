@@ -1,0 +1,38 @@
+# Created by Claude Opus 5.5, 2026-11-06 Europe/Warsaw.
+[package]
+name = "jobex-assistant"
+version = "0.1.0"
+edition = "2024"
+description = "Proxy between the Jobex demo page and the DeepSeek API: holds the key, adds the Jobex prompt and tools, enforces scope, quiet hours and spending limits"
+publish = false
+license = "MIT"
+
+[dependencies]
+aes-gcm = "0.10"
+anyhow = "1"
+argon2 = "0.5"
+async-stream = "0.3"
+axum = "0.8"
+base64 = "0.22"
+chrono = { version = "0.4", default-features = false, features = ["clock", "std", "serde"] }
+futures-util = "0.3"
+rand = "0.8"
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json", "stream"] }
+rpassword = "7"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "time", "sync", "signal"] }
+toml = "0.8"
+tower-http = { version = "0.6", features = ["cors"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "time", "sync", "test-util"] }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = true

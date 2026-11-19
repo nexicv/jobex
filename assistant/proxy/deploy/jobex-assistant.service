@@ -1,0 +1,38 @@
+# /etc/systemd/system/jobex-assistant.service
+# Created by Claude Opus 5.5, 2026-11-06. Secrets live in /etc/jobex-assistant/env (root only, mode 600; systemd reads it before dropping to the service user).
+[Unit]
+Description=Jobex assistant proxy (DeepSeek)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=jobex-assistant
+Group=jobex-assistant
+EnvironmentFile=/etc/jobex-assistant/env
+ExecStart=/usr/local/bin/jobex-assistant serve /etc/jobex-assistant/config.toml
+Restart=on-failure
+RestartSec=3
+
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=yes
+RestrictRealtime=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+ReadOnlyPaths=/srv/jobex
+MemoryMax=150M
+
+[Install]
+WantedBy=multi-user.target
