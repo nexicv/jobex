@@ -27,14 +27,17 @@ Then visit http://127.0.0.1:8000/Jobex-prototype.html. Browser storage is separa
 - On screens 1000 px and wider, Discover is a full-screen deck: one large shift card with the next two stacked behind. Drag the card, use the buttons, or press ← (pass), → (I'm interested) and ↑ (details). Search, sort, the lore slider and the availability switch are under **Refine**. Narrower screens keep the earlier Discover layout for now.
 - Notifications at the bottom right when a company accepts or declines your interest, with a button to open the chat or find similar shifts.
 - Worker shift discovery, saved shifts, preferences, and availability filters.
-- Local text parsing that creates a reviewable shift draft.
+- DeepSeek extraction for editable shift drafts, with manual entry and optional past-posting suggestions.
+- An editable CV builder with Classic and Skills first print layouts.
 - Candidate scoring based on skills, availability, commute, and preferred rate.
 - Employer acceptance, local chat, agreement previews, and simulated signing.
 - Simulated completion, mutual ratings, and metrics derived from demo actions.
 
-All profiles, shifts, verification badges, commute values, and agreements are illustrative. The built-in draft form uses local parsing and templates. Worker and employer chat is simulated by switching roles in the same browser. On [larpd.work](https://larpd.work), Ask LARPd sends assistant messages to DeepSeek via the LARPd API. Use sample data only.
+All profiles, shifts, verification badges, commute values, and agreements are illustrative. Worker and employer chat is simulated by switching roles in the same browser. On [larpd.work](https://larpd.work), Ask LARPd sends assistant messages and submitted draft briefs or CV notes to DeepSeek via the LARPd API. Past postings used to fill shift blanks and names entered on the CV review form stay in the browser. Use sample data only.
 
 State is stored in the browser's `localStorage` under `jobex-v1`. It is not shared with teammates or written to repository files. Use **Reset** in the header, **Reset demo** at the bottom of the page, or **Reset everything** in the LARP demo admin panel to clear all stored demo data and reload the sample state. Avoid entering personal or sensitive information.
+
+Each reload opens a blank assistant chat. Chat history retains up to 12 conversations in the current tab so you can reopen one and continue. If you reload mid-reply, reopen the chat to continue from the last completed turn.
 
 ## Try the main flow
 
@@ -43,7 +46,7 @@ State is stored in the browser's `localStorage` under `jobex-v1`. It is not shar
 3. In chat, prepare and send the demo agreement.
 4. Switch to the worker, review the agreement, and simulate signing.
 5. Simulate completing the shift, then leave feedback from both roles.
-6. In the employer workspace, generate a shift draft, review its fields, and publish it locally.
+6. In Shift studio, extract a draft from a brief or enter it manually. Select and confirm a previous posting if you want it to fill blank fields, then review and publish the draft locally.
 
 ## Checks and limitations
 

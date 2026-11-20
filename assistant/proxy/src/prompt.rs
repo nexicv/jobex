@@ -77,9 +77,10 @@ mod tests {
         assert!(a.system_prompt.contains("What LARPd is"));
         assert!(!a.system_prompt.contains("{{KNOWLEDGE}}"));
         let tools = a.tools.as_array().unwrap();
-        assert_eq!(tools.len(), 23);
+        assert_eq!(tools.len(), 24);
         assert!(tools.iter().all(|t| t.get("x_jobex").is_none()));
         assert_eq!(a.label("search_shifts", false), "Finding suitable shifts");
         assert_eq!(a.label("draft_shift", true), "Tworzę formularz zmiany");
+        assert_eq!(a.label("open_cv_builder", false), "Opening the CV builder");
     }
 }

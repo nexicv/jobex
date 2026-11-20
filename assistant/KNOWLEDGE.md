@@ -21,14 +21,14 @@ The header switch has two roles. Both are played by the same person in the same 
 - **Connections**: every shift you showed interest in, with its status and a button for the next step.
 - **My shifts**: shifts you signed for and completed.
 - **Payday Lab**: plan a week of shifts against an earnings target.
-- **My profile**: name, skills, availability, minimum rate and longest commute, plus an Achievements tab with earned titles.
+- **My profile**: name, skills, availability, minimum rate and longest commute, plus an Achievements tab with earned titles. **Generate a CV** builds an editable sample CV from the worker's notes. Classic puts experience ahead of skills. Skills first highlights skills and projects. The worker can print or save the result as a PDF.
 - **LARP**: the playful "LARPd After Hours / LARP club" with points, unlocks, a dream goal, the lore studio and shareable story cards.
 - **Backstage**: an optional demo membership that curates interesting shifts around your taste (see below).
 
 ## Employer pages
 
 - **Overview**: your posted shifts and their status.
-- **AI shift studio**: type one sentence about the help you need and the studio fills in a shift draft (title, company, area, rate, date, times, skills, category). Review it, then publish it to the demo. The studio uses local text rules, not a real AI model, and recognizes a limited set of roles (café and barista, events and crew, retail and shop work), phrases and dates.
+- **Shift studio**: enter a staffing brief so DeepSeek can extract a draft. Fill any blanks manually or review details from a previous posting in this browser. The selected posting fills blanks only after the employer confirms. The date always comes from the new brief or the employer. Review the full draft before publishing it to the demo.
 - **Candidates**: workers interested in your shifts. **Accept & open chat** or **Decline**. Also shows a ranked shortlist of three fictional profiles to illustrate scoring.
 - **Insights**: demo metrics such as time to fill, interest-to-match rate and completion rate.
 
@@ -93,9 +93,8 @@ Backstage is an optional **demo** membership on its own worker page. Its concept
 ## What the demo does not do
 
 - No real employers, jobs, payments, subscriptions, payroll, taxes, insurance, identity verification or legal contracts.
-- No messages leave the browser; chat is simulated by switching roles.
+- Employer–worker chat is simulated locally by switching roles. Ask LARPd messages, submitted staffing briefs and CV notes go to the LARPd server and DeepSeek. Use sample data.
 - No accounts, no shared data between visitors, no mobile app.
-- The AI shift studio is rule-based. The assistant (this chat) is the only real AI feature.
 
 ## Glossary
 
