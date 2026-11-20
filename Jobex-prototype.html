@@ -548,7 +548,7 @@ body.ob-open .assistant-fab{display:none}
 @media (max-width:999px){.assistant-panel{width:100vw;border-left:0;box-shadow:none}.assistant-fab{right:16px;bottom:16px}.assistant-on #notices{bottom:calc(16px + 56px + 12px)}}
 @media (prefers-reduced-motion:reduce){.assistant-step.is-current .assistant-step-icon{animation:none;border-top-color:var(--accent-text)}.assistant-steps-summary::after{transition:none}}
 </style>
-<script id="assistant">const ASSISTANT_URL = '';
+<script id="assistant">const ASSISTANT_URL = 'https://api.larpd.work';
 
 (function () {
   'use strict';
@@ -648,7 +648,7 @@ body.ob-open .assistant-fab{display:none}
 
   function resolveBase() {
     var raw = typeof ASSISTANT_URL === 'string' ? ASSISTANT_URL.trim() : '';
-    if (raw) return trimSlash(raw);
+    if (raw && location.origin === 'https://larpd.work') return trimSlash(raw);
     var q = '';
     try { q = new URLSearchParams(location.search).get('assistant') || ''; } catch (e) { q = ''; }
     if (!q) return '';
@@ -749,7 +749,7 @@ body.ob-open .assistant-fab{display:none}
     form.appendChild(stop);
 
     var note = el('p', 'assistant-note');
-    note.textContent = "AI answers can be wrong. Demo data only; don't enter real personal details.";
+    note.textContent = "Messages go to the LARPd server and DeepSeek. Use demo data only. AI answers can be wrong.";
 
     var foot = el('div', 'assistant-foot');
     var teamLink = el('button', 'assistant-link', { type: 'button' });
