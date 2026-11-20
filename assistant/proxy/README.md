@@ -5,7 +5,7 @@ Created by Claude Opus 5.5, 6 November 2026. The proxy between the LARPd page (f
 ## Build and test
 
 ```sh
-cargo test            # 17 tests; DeepSeek is faked, no API calls or key needed
+cargo test            # DeepSeek is faked, no API calls or key needed
 cargo clippy --all-targets
 cargo build --release # target/release/jobex-assistant
 ```
@@ -31,6 +31,8 @@ Copy `config.example.toml` to `config.toml` and fill `[prices]` from DeepSeek's 
 `GET /v1/status` returns `{open, quiet_hours, reopens_at, now, team, team_configured}`. Send the passphrase in an `x-jobex-team` header to check it.
 
 `POST /v1/chat` takes `{ "locale": "en" | "pl", "messages": [...] }` and answers with server-sent events. Messages use DeepSeek's chat format; assistant messages must be sent back exactly as the proxy returned them (they carry `sealed_reasoning`). `system` messages from the page are ignored.
+
+`POST /v1/draft` takes `{ "kind": "shift" | "cv", "text": "...", "today": "YYYY-MM-DD" }` and returns a JSON draft. The date helps interpret relative shift dates and is optional. Shift fields include quoted evidence from the submitted brief. The browser reviews past-posting suggestions locally, and the CV request receives only the submitted notes. Both routes share quiet hours and request and spending limits.
 
 | Event | Data | Page does |
 |---|---|---|

@@ -642,7 +642,7 @@
       "type": "function",
       "function": {
         "name": "draft_shift",
-        "description": "As the employer, turn a one-sentence brief into a shift draft in the AI shift studio, without publishing. Returns the extracted fields so you can point out anything to fix.",
+        "description": "As the employer, prepare an editable draft in Shift studio from the actual staffing brief. Include only facts the employer has supplied. Does not publish.",
         "parameters": {
           "type": "object",
           "properties": {
@@ -662,7 +662,25 @@
         "label_pl": "Tworzę formularz zmiany",
         "confirm": false,
         "role": "employer",
-        "runs": "parseBrief() into state.draft, then go('studio')"
+        "runs": "Extracts a draft and opens Shift studio"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "open_cv_builder",
+        "description": "Open the worker's CV builder to draft and review a CV from their own skills and experience. Does not publish or send a CV to an employer.",
+        "parameters": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false
+        }
+      },
+      "x_jobex": {
+        "label": "Opening the CV builder",
+        "label_pl": "Otwieram kreator CV",
+        "confirm": false,
+        "role": "worker"
       }
     },
     {

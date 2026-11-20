@@ -26,6 +26,7 @@ pub fn router(app: Arc<chat::App>) -> Router {
         .route("/healthz", get(chat::healthz))
         .route("/v1/status", get(chat::status))
         .route("/v1/chat", post(chat::chat))
+        .route("/v1/draft", post(chat::draft))
         .layer(axum::extract::DefaultBodyLimit::max(256 * 1024))
         .layer(cors)
         .with_state(app)

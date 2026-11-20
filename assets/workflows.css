@@ -1,0 +1,41 @@
+.js-find-with-assistant { display: none; }
+.assistant-on .js-find-with-assistant { display: inline-flex; }
+.assistant-on .assistant-fab { border-radius: 10px; padding-inline: 16px; box-shadow: 0 4px 12px var(--sh); }
+.assistant-history { display: grid; align-items: center; grid-template-columns: auto minmax(0, 1fr); gap: 8px; padding: 8px 14px; border-bottom: 1px solid var(--line); }
+.assistant-history label { color: var(--soft); font-size: 12px; }
+.assistant-history select { min-width: 0; min-height: 36px; }
+.assistant-starters, .workflow-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.assistant-starters button { white-space: normal; }
+.assistant-shift-result { display: grid; gap: 4px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; }
+.assistant-shift-result + .assistant-shift-result { margin-top: 8px; }
+.assistant-shift-result p { margin: 0; font-size: 12px; color: var(--soft); }
+.assistant-shift-result .button { justify-self: start; margin-top: 4px; }
+.workflow-form, .workflow-empty { min-width: 0; }
+.workflow-form > h2, .workflow-empty > h2 { margin: 0 0 12px; }
+.workflow-form .button, .workflow-history { margin-top: 12px; }
+.workflow-form .workflow-actions .button { margin-top: 0; }
+.workflow-actions { margin: 12px 0; }
+.workflow-history { padding: 12px; border: 1px solid var(--line); border-radius: 8px; }
+.workflow-history > summary { cursor: pointer; color: var(--ink); font-weight: 600; }
+.workflow-history dl { margin-block: 8px; }
+.workflow-history dl div { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; margin: 4px 0; font-size: 13px; }
+.workflow-history dd { margin: 0; overflow-wrap: anywhere; }
+.cv-editor textarea { min-height: 88px; }
+.cv-review { border-top: 1px solid var(--line); margin-top: 16px; padding-top: 16px; }
+@media (max-width: 999px) {
+  .assistant-on .assistant-panel { top: var(--assistant-top, 0px); bottom: auto; height: var(--assistant-height, 100dvh); }
+}
+@media print {
+  body.cv-print > :not(#modal), body.cv-print #modal > :not(#cv-print-sheet) { display: none !important; }
+  body.cv-print { margin: 0; background: white; }
+  body.cv-print #modal {
+    position: static; display: block; width: auto; max-width: none; max-height: none;
+    margin: 0; padding: 0; background: white; color: black; border: 0; box-shadow: none; overflow: visible;
+  }
+  body.cv-print #modal::backdrop { display: none; }
+  body.cv-print #cv-print-sheet { display: block !important; font: 11pt/1.5 Arial, sans-serif; }
+  body.cv-print #cv-print-sheet h1 { margin: 0 0 20px; font: 700 22pt/1.15 Arial, sans-serif; }
+  body.cv-print #cv-print-sheet h2 { margin: 16px 0 4px; font: 700 13pt/1.2 Arial, sans-serif; }
+  body.cv-print #cv-print-sheet section { break-inside: avoid; overflow-wrap: anywhere; }
+  body.cv-print #cv-print-sheet p { white-space: pre-wrap; }
+}

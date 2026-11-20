@@ -326,6 +326,32 @@ async function handleChat(req, res) {
   endStream(res);
 }
 
+async function handleDraft(req, res) {
+  const body = await readJson(req);
+  if (!body || typeof body.text !== 'string' || !body.text.trim()) return bad(res, 'Enter a sample brief or notes.');
+  const status = statusPayload(req);
+  const text = body.text;
+  const draft = {};
+  if (body.kind === 'shift') {
+    for (const [key, value, evidence] of [
+      ['title', 'Barista', 'barista'], ['company', 'MOKO Coffee', 'MOKO Coffee'],
+      ['area', 'Mokotów', 'Mokotów'], ['rate', 35, '35 zł/hour'],
+      ['start', '08:00', '08:00'], ['end', '16:00', '16:00'],
+      ['category', 'Hospitality', 'barista']
+    ]) {
+      if (text.includes(evidence)) draft[key] = { value, evidence };
+    }
+  } else if (body.kind === 'cv') {
+    draft.summary = 'Sample CV draft based on your notes.';
+    draft.skills = [text];
+    draft.experience = [];
+  } else {
+    return bad(res, 'Unknown draft type.');
+  }
+  res.writeHead(status.open ? 200 : 503, { 'Content-Type': 'application/json; charset=utf-8' });
+  res.end(JSON.stringify(status.open ? draft : { text: 'The assistant is resting right now.' }));
+}
+
 const server = createServer((req, res) => {
   setCors(req, res);
   const url = new URL(req.url, 'http://127.0.0.1');
@@ -350,6 +376,10 @@ const server = createServer((req, res) => {
       if (!res.headersSent) bad(res, 'The fake proxy failed.');
       else endStream(res);
     });
+    return;
+  }
+  if (req.method === 'POST' && url.pathname === '/v1/draft') {
+    handleDraft(req, res).catch(() => bad(res, 'The fake proxy could not draft those details.'));
     return;
   }
   res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
