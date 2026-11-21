@@ -1,15 +1,24 @@
 .js-find-with-assistant { display: none; }
 .assistant-on .js-find-with-assistant { display: inline-flex; }
-.assistant-on .assistant-fab { border-radius: 10px; padding-inline: 16px; box-shadow: 0 4px 12px var(--sh); }
+.assistant-page-host { max-width: 860px; margin-inline: auto; }
+.assistant-panel.assistant-page {
+  position: relative; inset: auto; z-index: auto; width: 100%;
+  height: clamp(420px, calc(100dvh - 152px), 820px);
+  border: 1px solid var(--line); border-radius: 12px; box-shadow: none; overflow: hidden;
+}
+.assistant-page .assistant-head { padding: 16px; }
+.assistant-page .assistant-title { font-size: clamp(22px, 3vw, 28px); }
+.assistant-page .assistant-history select { width: min(100%, 320px); }
 .assistant-history { display: grid; align-items: center; grid-template-columns: auto minmax(0, 1fr); gap: 8px; padding: 8px 14px; border-bottom: 1px solid var(--line); }
 .assistant-history label { color: var(--soft); font-size: 12px; }
 .assistant-history select { min-width: 0; min-height: 36px; }
 .assistant-starters, .workflow-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .assistant-starters button { white-space: normal; }
-.assistant-shift-result { display: grid; gap: 4px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; }
-.assistant-shift-result + .assistant-shift-result { margin-top: 8px; }
-.assistant-shift-result p { margin: 0; font-size: 12px; color: var(--soft); }
-.assistant-shift-result .button { justify-self: start; margin-top: 4px; }
+.assistant-shift-links { align-self: start; max-width: 100%; font-size: 13px; }
+.assistant-shift-links summary { color: var(--accent-text); cursor: pointer; min-height: 28px; }
+.assistant-shift-links ul { margin: 4px 0 0; padding-inline-start: 20px; }
+.assistant-shift-links li { padding-block: 4px; }
+.assistant-shift-links .text-button { text-align: start; white-space: normal; overflow-wrap: anywhere; }
 .workflow-form, .workflow-empty { min-width: 0; }
 .workflow-form > h2, .workflow-empty > h2 { margin: 0 0 12px; }
 .workflow-form .button, .workflow-history { margin-top: 12px; }
@@ -22,8 +31,10 @@
 .workflow-history dd { margin: 0; overflow-wrap: anywhere; }
 .cv-editor textarea { min-height: 88px; }
 .cv-review { border-top: 1px solid var(--line); margin-top: 16px; padding-top: 16px; }
-@media (max-width: 999px) {
-  .assistant-on .assistant-panel { top: var(--assistant-top, 0px); bottom: auto; height: var(--assistant-height, 100dvh); }
+@media (max-width: 720px) {
+  .assistant-on .mobile-nav { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .assistant-panel.assistant-page { height: max(288px, calc(var(--assistant-height, 100dvh) - 194px - env(safe-area-inset-bottom))); }
+  .assistant-page .assistant-input { font-size: 16px; }
 }
 @media print {
   body.cv-print > :not(#modal), body.cv-print #modal > :not(#cv-print-sheet) { display: none !important; }

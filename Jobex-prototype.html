@@ -298,7 +298,10 @@ const I={spark:'M12 3l2.4 6.6L21 12l-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4L12 3z',
 const dayOffset=n=>{const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()+n);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};const initialJobs=[{id:1,title:'Barista for a day',company:'MOKO Coffee',category:'Hospitality',rate:35,date:dayOffset(0),start:'08:00',end:'16:00',area:'Mokotów, Warsaw',commute:12,requirements:['Coffee making','Customer service'],description:'Help our friendly café team through the Friday rush. Prepare coffees, welcome customers, and keep the counter looking good.',urgent:true,scene:'cafe'},{id:2,title:'Event crew wanted',company:'Studio Praga',category:'Events',rate:38,date:dayOffset(1),start:'15:00',end:'23:00',area:'Praga, Warsaw',commute:24,requirements:['Teamwork','Event setup'],description:'Help set up a local design event, welcome guests, and support the team through the evening.',urgent:false,scene:'event'},{id:3,title:'A fresh retail shift',company:'Form & Field',category:'Retail',rate:33,date:dayOffset(0),start:'10:00',end:'18:00',area:'Śródmieście, Warsaw',commute:18,requirements:['Customer service','Stock handling'],description:'Join a small homewares store for a busy Friday. Help customers, refresh the displays, and organise new arrivals.',urgent:true,scene:'retail'}];
 const seed=()=>({role:'worker',page:'discover',filter:'All shifts',jobs:JSON.parse(JSON.stringify(initialJobs)),skipped:[],saved:[],applications:[],profile:{name:'Alex Kowalski',available:true,minRate:30,maxCommute:30,skills:['Coffee making','Customer service','Teamwork'],days:[dayOffset(0),dayOffset(1)],start:'07:00',end:'23:00'},draft:null,sessionStart:Date.now()});let state=seed();try{const v=JSON.parse(localStorage.getItem('jobex-v1'));if(v?.jobs&&v?.profile)state=v}catch{}let toastTimer;const main=document.getElementById('main'),modal=document.getElementById('modal');function persist(){try{localStorage.setItem('jobex-v1',JSON.stringify(state))}catch{}}function toast(t){const el=document.getElementById('toast');el.textContent=t;el.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.hidden=true,3800)}function job(id){return state.jobs.find(j=>j.id===id)}function application(id){return state.applications.find(a=>a.jobId===id)}function hours(j){return (minutes(j.end)-minutes(j.start))/60}function minutes(t){const [h,m]=t.split(':').map(Number);return h*60+m}function earnings(j){return (hours(j)*j.rate).toFixed(0)}function day(d){return new Date(d+'T12:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})}function fit(j,p=state.profile){let skills=j.requirements.filter(s=>p.skills.includes(s));let available=p.available&&p.days.includes(j.date)&&minutes(j.start)>=minutes(p.start)&&minutes(j.end)<=minutes(p.end);let travel=j.commute<=p.maxCommute;let pay=j.rate>=p.minRate;let conflict=(p===state.profile||p.initial==='AK')&&state.applications.some(a=>a.status==='signed'&&a.jobId!==j.id&&job(a.jobId).date===j.date&&minutes(j.start)<minutes(job(a.jobId).end)&&minutes(j.end)>minutes(job(a.jobId).start));return {skills,available,travel,pay,conflict,score:Math.round((skills.length/Math.max(1,j.requirements.length))*45+(available?25:0)+(travel?20:0)+(pay?10:0)),eligible:available&&travel&&pay&&!conflict}}
 function scene(type){let art=type==='cafe'?`<rect width="600" height="250" fill="#b6a28d"/><rect x="30" width="210" height="200" fill="#d9e5de"/><path d="M30 70h210M30 140h210M100 0v200M170 0v200" stroke="#556e62" stroke-width="8"/><path d="M0 170L300 0h120L80 250H0" fill="#fff3d32b"/><rect x="290" y="65" width="260" height="12" fill="#694c39"/><rect x="305" y="25" width="27" height="40" rx="3" fill="#7c654b"/><rect x="345" y="36" width="30" height="29" rx="3" fill="#e5d0ac"/><path d="M425 65V28q20-22 35 0v37" fill="#798967"/><rect x="468" y="23" width="55" height="42" rx="3" fill="#a87953"/><rect x="280" y="105" width="180" height="70" rx="8" fill="#3a4c44"/><rect x="291" y="114" width="158" height="20" rx="3" fill="#9eaaa0"/><circle cx="315" cy="124" r="5" fill="#e1cf99"/><path d="M340 140v16m35-16v16m35-16v16" stroke="#bdc2b4" stroke-width="7"/><rect x="330" y="157" width="25" height="18" rx="4" fill="#f0e7cf"/><rect x="365" y="157" width="25" height="18" rx="4" fill="#f0e7cf"/><rect y="179" width="600" height="20" fill="#77543c"/><rect y="199" width="600" height="51" fill="#9c7756"/><path d="M0 208h600M50 199v51m80-51v51m80-51v51m80-51v51m80-51v51m80-51v51m80-51v51" stroke="#805e45" stroke-width="2"/><ellipse cx="136" cy="174" rx="45" ry="8" fill="#92704d"/><path d="M108 135h55v35q-25 14-55 0z" fill="#eee3ca"/><path d="M163 140h8q20 12 0 23h-8" fill="none" stroke="#eee3ca" stroke-width="7"/><path d="M126 125q-12-15 2-30m20 30q-12-15 2-30" stroke="#eee3ca99" stroke-width="4" fill="none"/><rect x="510" y="142" width="35" height="37" fill="#bf986d"/><path d="M528 145v-36m0 17q-40-25-32-40 28-4 32 40m0-9q32-27 40-12-4 26-40 26" fill="#617a52" stroke="#617a52" stroke-width="4"/>` : type==='event'?`<rect width="600" height="250" fill="#3c3559"/><path d="M50 0l120 250H0zM420 0l160 250H320z" fill="#b994ed24"/><rect x="90" y="85" width="420" height="130" rx="8" fill="#65548b"/><path d="M115 110h370v80H115z" fill="#ab92c2"/><text x="300" y="162" font-family="sans-serif" font-weight="bold" font-size="34" text-anchor="middle" fill="#f1e5ff" letter-spacing="7">AFTER HOURS</text><path d="M0 35Q300 100 600 35" stroke="#d9caee" fill="none" stroke-width="2"/><g fill="#f5db92"><circle cx="60" cy="47" r="5"/><circle cx="150" cy="61" r="5"/><circle cx="240" cy="67" r="5"/><circle cx="330" cy="68" r="5"/><circle cx="420" cy="62" r="5"/><circle cx="510" cy="49" r="5"/></g><rect y="215" width="600" height="35" fill="#29263d"/><path d="M45 250v-80h30v80m450 0v-80h30v80" stroke="#191b2c" fill="#191b2c"/>`:`<rect width="600" height="250" fill="#ddd1bc"/><rect x="65" y="30" width="200" height="170" rx="80" fill="#a5b0a1"/><path d="M60 85h210M165 25v180" stroke="#e9e1d3" stroke-width="7"/><path d="M310 65h240m-240 70h240m-240 70h240" stroke="#917456" stroke-width="9"/><g fill="#b77557"><path d="M330 65V40q15-20 30 0v25z"/><path d="M430 135V95h35v40z"/></g><g fill="#f5eddb"><path d="M390 65V28h24v37z"/><path d="M495 65V30h32v35z"/><path d="M335 135V98h45v37z"/><path d="M485 135V99q15-20 30 0v36z"/></g><rect x="330" y="170" width="70" height="30" fill="#9fa688"/><rect x="430" y="169" width="90" height="30" fill="#c1a17c"/><rect y="217" width="600" height="33" fill="#c6af92"/><ellipse cx="160" cy="182" rx="75" ry="13" fill="#b18c64"/><path d="M103 183v67m113-67v67" stroke="#906d4d" stroke-width="9"/><path d="M160 178v-65m0 25q-45-35-50-7 10 30 50 29m0-8q40-40 48-10-10 25-48 25" fill="#5e7656" stroke="#5e7656" stroke-width="5"/>`;return `<svg viewBox="0 0 600 250" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Illustrated ${type==='cafe'?'coffee shop':type==='event'?'event venue':'retail shop'}"><defs><linearGradient id="shade" x2="0" y2="1"><stop offset=".4" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".25"/></linearGradient></defs>${art}<rect width="600" height="250" fill="url(#shade)"/></svg>`}
-const menus={worker:[['discover','cards','Discover'],['matches','chat','Connections'],['shifts','calendar','My shifts'],['payday','chart','Payday Lab'],['profile','user','My profile'],['larp','spark','LARP']],employer:[['overview','briefcase','Overview'],['studio','spark','Shift studio'],['candidates','user','Candidates'],['analytics','chart','Insights']]};function setRole(r){state.role=r;state.page=r==='worker'?'discover':'overview';render()}function go(p){state.page=p;render();main.focus({preventScroll:true});window.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'})}function render(){initLarp();initSocial();persist();const items=menus[state.role];const nav=items.map(([p,i,t])=>`<button class="${state.page===p?'active':''}" aria-current="${state.page===p?'page':'false'}" onclick="go('${p}')" title="${t}" aria-label="${t}">${icon(i)}<span class="nav-label">${t}</span>${p==='matches'&&state.applications.length?`<span class="nav-count">${state.applications.length}</span>`:''}</button>`).join('');document.getElementById('nav').innerHTML=nav;document.getElementById('mobileNav').innerHTML=items.map(([p,i,t])=>`<button class="${state.page===p?'active':''}" aria-current="${state.page===p?'page':'false'}" onclick="go('${p}')">${icon(i)}${t}</button>`).join('');document.getElementById('crumb').textContent=items.find(x=>x[0]===state.page)?.[2]||({matches:'Inbox',profile:'My profile',payday:'Payday Lab',backstage:'Backstage'}[state.page])||'Discover';document.getElementById('workerRole').classList.toggle('active',state.role==='worker');document.getElementById('employerRole').classList.toggle('active',state.role==='employer');document.getElementById('identityName').textContent=state.role==='worker'?state.profile.name:'MOKO Coffee';document.getElementById('identityAvatar').textContent=state.role==='worker'?initials(state.profile.name):'MC';document.getElementById('identitySub').textContent=state.role==='worker'?activeTitle():'Employer workspace';main.innerHTML=`<div class="fade">${({discover,matches,shifts,profile,overview,studio,candidates,analytics,larp,payday,backstage,afterhours}[state.page]||discover)()}</div><div class="bottom-strip"><span>Prototype · Fictional profiles and shifts · Simulated AI, checks & signing</span><button class="text-button" onclick="resetDialog()">Reset demo</button></div>`;document.getElementById('workerRole').setAttribute('aria-pressed',state.role==='worker');document.getElementById('employerRole').setAttribute('aria-pressed',state.role==='employer');wireSwipe();flushNotices();renderAccountHeader()}
+const menus={worker:[['discover','cards','Discover'],['matches','chat','Connections'],['shifts','calendar','My shifts'],['payday','chart','Payday Lab'],['profile','user','My profile'],['larp','spark','LARP']],employer:[['overview','briefcase','Overview'],['studio','spark','Shift studio'],['candidates','user','Candidates'],['analytics','chart','Insights']]};function setRole(r){state.role=r;if(state.page!=='assistant')state.page=r==='worker'?'discover':'overview';render()}function go(p){state.page=p;render();main.focus({preventScroll:true});window.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'})}function render(){initLarp();initSocial();persist();const items=menus[state.role];const nav=items.map(([p,i,t])=>`<button class="${state.page===p?'active':''}" aria-current="${state.page===p?'page':'false'}" onclick="go('${p}')" title="${t}" aria-label="${t}">${icon(i)}<span class="nav-label">${t}</span>${p==='matches'&&state.applications.length?`<span class="nav-count">${state.applications.length}</span>`:''}</button>`).join('');document.getElementById('nav').innerHTML=nav;document.getElementById('mobileNav').innerHTML=items.map(([p,i,t])=>`<button class="${state.page===p?'active':''}" aria-current="${state.page===p?'page':'false'}" onclick="go('${p}')">${icon(i)}${t}</button>`).join('');document.getElementById('crumb').textContent=items.find(x=>x[0]===state.page)?.[2]||({matches:'Inbox',profile:'My profile',payday:'Payday Lab',backstage:'Backstage'}[state.page])||'Discover';document.getElementById('workerRole').classList.toggle('active',state.role==='worker');document.getElementById('employerRole').classList.toggle('active',state.role==='employer');document.getElementById('identityName').textContent=state.role==='worker'?state.profile.name:'MOKO Coffee';document.getElementById('identityAvatar').textContent=state.role==='worker'?initials(state.profile.name):'MC';document.getElementById('identitySub').textContent=state.role==='worker'?activeTitle():'Employer workspace';main.innerHTML=`<div class="fade">${({discover,matches,shifts,profile,overview,studio,candidates,analytics,larp,payday,backstage,afterhours,assistant:assistantPage}[state.page]||discover)()}</div><div class="bottom-strip"><span>Prototype · Fictional profiles and shifts · Simulated AI, checks & signing</span><button class="text-button" onclick="resetDialog()">Reset demo</button></div>`;document.getElementById('workerRole').setAttribute('aria-pressed',state.role==='worker');document.getElementById('employerRole').setAttribute('aria-pressed',state.role==='employer');wireSwipe();flushNotices();renderAccountHeader();window.larpdAssistant?.mount()}
+function assistantPage(){
+  return '<div id="assistantPage" class="assistant-page-host"><p role="status">The assistant is unavailable. You can still use the rest of the demo.</p></div>';
+}
 function heading(ey,title,sub,action=''){return `<div class="heading"><div><span class="eyebrow">${ey}</span><h1>${title}</h1><p>${sub}</p></div>${action}</div>`}function empty(title,body,action=''){return `<div class="empty"><div class="empty-symbol">${icon('spark')}</div><h2>${title}</h2><p>${body}</p>${action}</div>`}function currentJobs(){const query=(state.search||'').trim().toLowerCase();return state.jobs.filter(j=>(!query||[j.title,j.company,j.area,j.description].join(' ').toLowerCase().includes(query))&&unlocked(j)&&!state.skipped.includes(j.id)&&!application(j.id)&&fit(j).eligible&&(state.filter==='All shifts'||state.filter===j.category||state.filter==='Saved'&&state.saved.includes(j.id))).sort((a,b)=>state.sort==='pay'?b.rate-a.rate:state.sort==='commute'?a.commute-b.commute:fit(b).score-fit(a).score)}
 function discoverBase(){const list=currentJobs(),j=list[0];return heading('FLEXIBLE WORK. REAL POSSIBILITIES.','Your next shift starts here.','A little extra income. A new experience. A shift that fits you.',`<button class="button light" onclick="go('profile')">${icon('sliders')} My preferences</button>`)+`<button class="button light small js-find-with-assistant" type="button" onclick="window.larpdAssistant?.findShifts()">Find shifts that fit</button>${delusionControl('discover')}${searchControls()}<div class="discovery"><section class="feed"><div class="filterbar">${['All shifts','Hospitality','Events','Retail','Saved'].map(f=>`<button class="chip ${state.filter===f?'active':''}" onclick="state.filter='${f}';render()">${f==='Saved'?icon('bookmark'):''}${f}</button>`).join('')}</div>${j?`<div class="job-wrap"><article class="job-card" id="swipeCard" data-job="${j.id}">${card(j)}</article></div><div class="swipe-actions"><div><button class="round skip" aria-label="Pass on this shift" onclick="skip(${j.id})">${icon('close')}</button><div class="action-label">PASS</div></div><div><button class="round like" aria-label="I'm interested in this shift" onclick="apply(${j.id})">${icon('heart')}</button><div class="action-label">I'M INTERESTED</div></div><div><button class="round" aria-label="View shift details" onclick="details(${j.id})">${icon('briefcase')}</button><div class="action-label">DETAILS</div></div></div><p class="swipe-hint">${state.skipped.length?`<button class="text-button" onclick="undoPass()">↶ Undo last pass</button><br>`:''}Swipe or tap to choose · ${list.length} suitable ${list.length===1?'shift':'shifts'} to explore</p>`:empty('No matching shifts right now.',!state.profile.available?'Your availability is paused. Turn it on or update your preferences.':state.search?'Try a broader search or clear your search and filters.':state.filter==='Saved'?'Save a shift using the bookmark to find it here.':'Check your preferences or restore passed shifts.',`<button class="button" onclick="go('profile')">Edit preferences</button> <button class="button light" onclick="state.search='';state.filter='All shifts';state.skipped=[];render()">Clear filters & restore passes</button>`)}</section><aside><div class="panel availability"><div class="panel-head"><h3>Your availability</h3><button class="switch ${state.profile.available?'on':''}" role="switch" aria-checked="${state.profile.available}" aria-label="Available for shifts" onclick="state.profile.available=!state.profile.available;render()"><span></span></button></div><div class="status-line"><span class="dot"></span>${state.profile.available?'Open to a good opportunity':'Taking a break'}</div>${state.profile.days.map(d=>`<div class="schedule-line"><b>${day(d)}</b><span>${state.profile.start}–${state.profile.end}</span></div>`).join('')}<button class="text-button" style="margin-top:13px" onclick="go('profile')">Edit availability ↗</button></div><div class="panel"><div class="panel-head"><h3>Made for your life</h3>${icon('spark')}</div><div class="fit-row"><div class="fit-icon">${icon('pin')}</div><div><b>Keep it local</b><p>Up to ${state.profile.maxCommute} minutes away.<br>More earning, less commuting.</p></div></div><div class="fit-row"><div class="fit-icon">${icon('calendar')}</div><div><b>Your time comes first</b><p>Shifts that fit your available hours.</p></div></div><div class="fit-row"><div class="fit-icon">${icon('shield')}</div><div><b>Know before you go</b><p>Clear rates, requirements and a contract preview.</p></div></div></div><div class="panel tip-panel"><span class="eyebrow">LESS PAPERWORK. MORE POSSIBILITY.</span><h3>Your skills are<br>your introduction.</h3><p>Show what you can do.<br>Leave the long CV behind.</p><button class="button lime small" onclick="go('profile')">Explore your profile ${icon('arrow')}</button></div></aside></div>`}
 function card(j){const f=fit(j);return `<div class="scene">${scene(j.scene)}<div class="scene-top"><span class="badge ${j.urgent?'lime':'white'}">${j.urgent?'↗ Hiring now':'A little change of scene'}</span><button class="save-btn" aria-label="${state.saved.includes(j.id)?'Unsave':'Save'} shift" onclick="saveJob(${j.id})" style="color:${state.saved.includes(j.id)?'var(--purple)':'var(--ink)'}">${icon('bookmark')}</button></div><span class="scene-caption">${esc(j.company.toUpperCase())} / WARSAW</span></div><div class="card-content"><div class="company">${esc(j.company)} ${icon('shield')} Demo verified</div><div class="job-title"><div><h2>${esc(discoverTitle(j))}</h2><span class="duration">${esc(j.category)} · One shift</span></div><div class="rate">${j.rate} zł<small>gross / hour</small></div></div><p class="panel-note" style="margin:12px 0">${esc(loreCaption(j))}</p>${state.larp.delusion>=34?`<small style="display:block;color:var(--muted)">Actual role: ${esc(j.title)}</small>`:''}<div class="meta"><span>${icon('pin')}${esc(j.area)}</span><span>${icon('clock')}${j.commute} min commute*</span></div><div class="job-info"><div><span class="mini-label">YOUR SHIFT</span><b>${day(j.date)} · ${j.start}–${j.end}</b></div><div><span class="mini-label">ESTIMATED GROSS PAY</span><b>${earnings(j)} zł <span style="font-weight:400;color:var(--muted)">/ ${hours(j)} hours</span></b></div></div><div class="taglist">${j.requirements.map(s=>`<span class="tag">${esc(s)}</span>`).join('')}<span class="tag">No CV needed</span></div>${goalWindow(j)}<div class="ai-reason">${icon('spark')}<span><b>${f.score}% demo match.</b> ${f.skills.length?`${f.skills.length} relevant skills`:'A chance to build new skills'} · ${f.available?'fits your hours':'check availability'} · ${f.travel?'within your commute':'longer commute'}.</span></div></div>`}
@@ -473,12 +476,6 @@ saveRating=function(id){const a=application(id);if(!a||a.status!=='completed'||!
 render();if(!state.onboarded)openOnboarding();
 </script><style>.rating-buttons{justify-content:center;gap:10px}.rating-buttons button{width:clamp(38px,10vw,58px);height:58px;transition:background .2s,color .2s,transform .2s}.rating-buttons button:hover{transform:translateY(-4px)}.rating-buttons button.selected{color:#a56cff;background:var(--pale)}#ratingStatus{text-align:center;min-height:28px;font-weight:700}.rating-celebration{text-align:center;padding:15px 0}.rating-success{font-size:72px;color:var(--purple);animation:ratingPop .65s both}.rating-celebration>p:first-of-type{font-size:28px;color:var(--purple)}@keyframes ratingPop{0%{transform:scale(.6) rotate(-12deg);opacity:.4}65%{transform:scale(1.18) rotate(5deg)}100%{transform:scale(1);opacity:1}}@media(prefers-reduced-motion:reduce){.rating-buttons button,.rating-success{animation:none!important;transition:none!important}}</style>
 <style id="assistant">
-.assistant-on #notices{bottom:calc(24px + 56px + 12px)}
-body.ob-open .assistant-fab{display:none}
-.assistant-fab{position:fixed;right:24px;bottom:24px;z-index:34;height:56px;padding:0 20px 0 16px;border-radius:999px;border:1px solid transparent;background:var(--accent);color:var(--on-accent);font-size:13px;font-weight:650;display:inline-flex;align-items:center;gap:8px;box-shadow:0 14px 34px var(--sh),0 2px 6px var(--sh-strong);cursor:pointer;letter-spacing:-.1px}
-.assistant-fab:hover{filter:brightness(1.08)}
-.assistant-fab:focus-visible{outline:2px solid var(--accent-text);outline-offset:3px}
-.assistant-fab-mark{font-size:14px;line-height:1}
 .assistant-panel{position:fixed;top:0;right:0;bottom:0;z-index:35;width:min(400px,100vw);display:flex;flex-direction:column;background:var(--surface);color:var(--ink);border-left:1px solid var(--line);box-shadow:-20px 0 60px var(--sh)}
 .assistant-panel[hidden]{display:none}
 .assistant-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 14px 12px;border-bottom:1px solid var(--line)}
@@ -542,7 +539,6 @@ body.ob-open .assistant-fab{display:none}
 .assistant-closed{margin:0 14px 14px;padding:14px;border-radius:10px;border:1px solid var(--tint-line);background:var(--tint);color:var(--ink);font-size:12px;line-height:1.6}
 .assistant-closed[hidden]{display:none}
 .assistant-live{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
-@media (max-width:999px){.assistant-panel{width:100vw;border-left:0;box-shadow:none}.assistant-fab{right:16px;bottom:16px}.assistant-on #notices{bottom:calc(16px + 56px + 12px)}}
 @media (prefers-reduced-motion:reduce){.assistant-step.is-current .assistant-step-icon{animation:none;border-top-color:var(--accent-text)}.assistant-steps-summary::after{transition:none}}
 </style>
 <script id="assistant">const ASSISTANT_URL = 'https://api.larpd.work';
@@ -751,24 +747,16 @@ body.ob-open .assistant-fab{display:none}
   }
 
   function buildUi() {
-    var fab = el('button', 'assistant-fab', { type: 'button', id: 'assistantFab', 'aria-haspopup': 'dialog', 'aria-expanded': 'false', 'aria-controls': 'assistantPanel' });
-    var fabLabel = el('span', 'assistant-fab-label');
-    fabLabel.textContent = 'Ask LARPd';
-    fab.appendChild(fabLabel);
-
-    var panel = el('section', 'assistant-panel', { id: 'assistantPanel', role: 'dialog', tabindex: '-1', 'aria-label': 'LARPd assistant' });
+    var panel = el('section', 'assistant-panel assistant-page', { id: 'assistantPanel', 'aria-labelledby': 'assistantTitle' });
     panel.hidden = true;
 
     var head = el('div', 'assistant-head');
-    var title = el('h2', 'assistant-title');
+    var title = el('h1', 'assistant-title', { id: 'assistantTitle' });
     title.textContent = 'Ask LARPd';
     var headActions = el('div', 'assistant-head-actions');
     var newChat = el('button', 'assistant-icon-btn', { type: 'button' });
     newChat.textContent = 'New chat';
-    var closeBtn = el('button', 'assistant-icon-btn', { type: 'button', 'aria-label': 'Close the assistant' });
-    closeBtn.textContent = 'Close';
     headActions.appendChild(newChat);
-    headActions.appendChild(closeBtn);
     head.appendChild(title);
     head.appendChild(headActions);
 
@@ -822,13 +810,8 @@ body.ob-open .assistant-fab{display:none}
     panel.appendChild(form);
     panel.appendChild(note);
     panel.appendChild(foot);
-    document.body.appendChild(fab);
-    document.body.appendChild(panel);
+    refs = { panel: panel, log: log, closed: closed, live: live, form: form, input: input, send: send, stop: stop, history: history, newChat: newChat, teamForm: teamForm, teamInput: teamInput, teamMsg: teamMsg };
 
-    refs = { fab: fab, panel: panel, log: log, closed: closed, live: live, form: form, input: input, send: send, stop: stop, history: history, newChat: newChat, teamForm: teamForm, teamInput: teamInput, teamMsg: teamMsg };
-
-    fab.addEventListener('click', openPanel);
-    closeBtn.addEventListener('click', closePanel);
     newChat.addEventListener('click', newChatNow);
     history.addEventListener('change', function () {
       var entry = archive.find(function (item) { return item.id === history.value; });
@@ -837,10 +820,8 @@ body.ob-open .assistant-fab{display:none}
     if (window.visualViewport) {
       var resizePanel = function () {
         panel.style.setProperty('--assistant-height', window.visualViewport.height + 'px');
-        panel.style.setProperty('--assistant-top', window.visualViewport.offsetTop + 'px');
       };
       window.visualViewport.addEventListener('resize', resizePanel);
-      window.visualViewport.addEventListener('scroll', resizePanel);
       resizePanel();
     }
     form.addEventListener('submit', function (ev) { ev.preventDefault(); ask(input.value); });
@@ -850,27 +831,17 @@ body.ob-open .assistant-fab{display:none}
     input.addEventListener('keydown', function (ev) {
       if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); ask(input.value); }
     });
-    document.addEventListener('keydown', function (ev) {
-      if (ev.key === 'Escape' && !panel.hidden) { ev.preventDefault(); closePanel(); }
-    });
   }
 
-  function openPanel() {
-    if (!refs.panel) return;
+  function mountAssistant() {
+    var host = document.getElementById('assistantPage');
+    var wasOpen = !refs.panel.hidden;
+    refs.panel.hidden = !host;
+    if (!host) return;
+    host.replaceChildren(refs.panel);
     if (!S.log.length) renderLog();
-    refs.panel.hidden = false;
-    refs.fab.setAttribute('aria-expanded', 'true');
-    if (matchMedia('(max-width: 999px)').matches) refs.panel.focus();
-    else refs.input.focus();
     scrollToEnd();
-    checkStatus();
-  }
-
-  function closePanel() {
-    if (!refs.panel) return;
-    refs.panel.hidden = true;
-    refs.fab.setAttribute('aria-expanded', 'false');
-    refs.fab.focus();
+    if (!wasOpen) checkStatus();
   }
 
   function newChatNow() {
@@ -888,9 +859,9 @@ body.ob-open .assistant-fab{display:none}
       refs.log.appendChild(empty);
       var starters = el('div', 'assistant-starters');
       var tasks = state.role === 'employer' ?
-        [['Draft a shift', function () { closePanel(); go('studio'); }]] :
+        [['Draft a shift', function () { go('studio'); }]] :
         [['Find shifts that fit', function () { ask('Find demo shifts that fit my availability and preferences.'); }],
-         ['Generate a CV', function () { closePanel(); openCvBuilder(); }]];
+         ['Generate a CV', function () { openCvBuilder(); }]];
       tasks.forEach(function (task) {
         var button = el('button', 'button light small', { type: 'button' });
         button.textContent = task[0];
@@ -918,25 +889,20 @@ body.ob-open .assistant-fab{display:none}
       return note;
     }
     if (item.kind === 'shift-results') {
-      var results = el('div', '', { 'aria-label': 'Matching demo shifts' });
-      item.ids.forEach(function (id) {
-        var shift = job(id);
-        if (!shift) return;
-        var card = el('article', 'assistant-shift-result');
-        var title = el('strong');
-        title.textContent = shift.title;
-        var facts = el('p');
-        facts.textContent = shift.company + ' · ' + day(shift.date) + ' · ' + shift.start + '–' + shift.end + ' · ' + earnings(shift) + ' zł gross';
-        var why = el('p');
-        var match = fit(shift);
-        why.textContent = match.eligible ? 'Fits your hours, pay and commute' + (match.skills.length ? ' · ' + match.skills.join(', ') : '') : fitReasons(shift).join(' · ');
-        var open = el('button', 'button light small', { type: 'button' });
-        open.textContent = 'View shift';
-        open.setAttribute('aria-label', 'View shift: ' + shift.title);
-        open.addEventListener('click', function () { closePanel(); details(id); });
-        card.append(title, facts, why, open);
-        results.appendChild(card);
+      var shifts = item.ids.map(job).filter(Boolean);
+      var results = el('details', 'assistant-shift-links');
+      var summaryLink = el('summary');
+      summaryLink.textContent = 'View ' + shifts.length + (shifts.length === 1 ? ' shift' : ' shifts');
+      var listLinks = el('ul');
+      shifts.forEach(function (shift) {
+        var row = el('li');
+        var open = el('button', 'text-button', { type: 'button' });
+        open.textContent = shift.title;
+        open.addEventListener('click', function () { details(shift.id); });
+        row.appendChild(open);
+        listLinks.appendChild(row);
       });
+      results.append(summaryLink, listLinks);
       return results;
     }
     var wrap = el('div', 'assistant-msg assistant-msg-bot');
@@ -1204,7 +1170,7 @@ body.ob-open .assistant-fab{display:none}
     stopRequested = false;
     setBusyUi(true);
     var item = { kind: 'assistant', text: '', steps: [], collapsed: false, finished: false };
-    cur = { item: item };
+    cur = { item: item, shiftIds: new Set() };
     appendLog(item);
     var rounds = 0;
     var stopped = false;
@@ -1243,6 +1209,9 @@ body.ob-open .assistant-fab{display:none}
       if (!last || last.role !== 'assistant' || (last.tool_calls && last.tool_calls.length)) S.messages.length = S.pendingAt;
       delete S.pendingAt;
       finishItem(item);
+      if (!stopped && cur.shiftIds.size) {
+        appendLog({ kind: 'shift-results', ids: Array.from(cur.shiftIds).slice(0, 3) });
+      }
       busy = false;
       cur = null;
       aborter = null;
@@ -1320,6 +1289,7 @@ body.ob-open .assistant-fab{display:none}
   }
 
   function confirmCard(name, args) {
+    if (state.page !== 'assistant') go('assistant');
     return new Promise(function (resolve) {
       var box = el('div', 'assistant-confirm');
       var text = el('p', 'assistant-confirm-text');
@@ -1471,7 +1441,6 @@ body.ob-open .assistant-fab{display:none}
       case 'decide_candidate': return decideCandidate(a);
       case 'draft_shift': return draftShift(a);
       case 'open_cv_builder':
-        closePanel();
         openCvBuilder();
         return emit({ ok: true, note: 'CV builder is open. The worker can add their own sample skills and review the result.' });
       case 'publish_shift': return publishShift(a);
@@ -1536,7 +1505,7 @@ body.ob-open .assistant-fab{display:none}
     });
     var total = rows.length;
     var out = rows.slice(0, limit).map(function (r) { return shiftRow(r.j, r.f); });
-    if (out.length) appendLog({ kind: 'shift-results', ids: out.slice(0, 3).map(function (r) { return r.id; }) });
+    if (cur) out.slice(0, 3).forEach(function (r) { cur.shiftIds.add(r.id); });
     var payload = { shifts: out, total_matching: total, returned: out.length, today: dayOffset(0) };
     if (total > out.length) payload.omitted = total - out.length;
     return emit(payload);
@@ -1848,7 +1817,6 @@ body.ob-open .assistant-fab{display:none}
       }
     }
     go('studio');
-    closePanel();
     var input = document.getElementById('brief');
     input.value = brief;
     input.focus();
@@ -2049,8 +2017,9 @@ body.ob-open .assistant-fab{display:none}
       if (typeof state === 'undefined' || typeof fit !== 'function' || typeof go !== 'function') return;
     } catch (e) { return; }
     window.larpdAssistant = {
+      mount: mountAssistant,
       findShifts: function () {
-        openPanel();
+        go('assistant');
         ask('Find demo shifts that fit my availability and preferences.');
       },
       draft: async function (kind, text, signal) {
@@ -2075,10 +2044,13 @@ body.ob-open .assistant-fab{display:none}
     installResetHook();
     loadStore();
     document.documentElement.classList.add('assistant-on');
+    menus.worker.push(['assistant', 'chat', 'Ask LARPd']);
+    menus.employer.push(['assistant', 'chat', 'Ask LARPd']);
     buildUi();
     paintHistory();
     renderLog();
     setComposerEnabled(true);
+    render();
   }
 
   boot();

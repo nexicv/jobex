@@ -39,6 +39,8 @@ State is stored in the browser's `localStorage` under `jobex-v1`. It is not shar
 
 Each reload opens a blank assistant chat. Chat history retains up to 12 conversations in the current tab so you can reopen one and continue. If you reload mid-reply, reopen the chat to continue from the last completed turn.
 
+Open Ask LARPd from the Worker or Hiring navigation. Discover's Find shifts that fit button opens the same conversation. When a reply includes search results, it shows up to three links in one collapsed list.
+
 ## Try the main flow
 
 1. In **I'm looking for work**, express interest in the barista shift.
